@@ -2,10 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { X, Search, ChevronRight } from 'lucide-react';
-import {
-  HELP_CONTENT,
-  type HelpBlock,
-} from '../data/helpContent';
+import { HELP_CONTENT, type HelpBlock } from '../data/helpContent';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface Props {
   open: boolean;
@@ -14,6 +12,7 @@ interface Props {
 }
 
 export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props) {
+  const isMobile = useIsMobile();
   const [query, setQuery] = useState('');
   const [activeId, setActiveId] = useState<string>(initialSectionId);
 
@@ -64,15 +63,20 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
   return (
     <div
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Инструкция"
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.6)',
+        background: 'var(--modal-overlay)',
         zIndex: 1000,
         display: 'flex',
-        alignItems: 'center',
+        alignItems: isMobile ? 'flex-start' : 'center',
         justifyContent: 'center',
-        padding: '1rem',
+        padding: isMobile
+          ? 'max(0.5rem, env(safe-area-inset-top)) 0.5rem max(0.5rem, env(safe-area-inset-bottom)) 0.5rem'
+          : 'max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))',
       }}
     >
       <div
@@ -80,13 +84,14 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
         style={{
           width: '100%',
           maxWidth: 900,
-          height: 'min(90vh, 700px)',
-          background: '#fff',
-          borderRadius: 16,
+          height: isMobile ? 'calc(100dvh - 1rem)' : 'min(90vh, 700px)',
+          background: 'var(--card-bg)',
+          color: 'var(--text)',
+          borderRadius: isMobile ? 12 : 16,
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          boxShadow: 'var(--modal-shadow)',
         }}
       >
         {/* ─── Заголовок ─────────────────── */}
@@ -95,10 +100,11 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '1rem 1.25rem',
-            borderBottom: '1px solid #e2e8f0',
-            background: '#0c1426',
+            padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem',
+            borderBottom: '1px solid var(--border)',
+            background: 'var(--primary-dark)',
             color: '#fff',
+            flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -106,7 +112,7 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
             <div>
               <div style={{ fontWeight: 700, fontSize: 16 }}>Инструкция</div>
               <div style={{ fontSize: 12, opacity: 0.7 }}>
-                Курс молодого бойца по «Золотому Инвестору»
+                {isMobile ? 'Курс молодого бойца' : 'Курс молодого бойца по «Золотому Инвестору»'}
               </div>
             </div>
           </div>
@@ -129,31 +135,23 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
         </div>
 
         {/* ─── Тело ─────────────────────── */}
-        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-          {/* Левая колонка — список */}
-          <aside
-            style={{
-              width: 240,
-              borderRight: '1px solid #e2e8f0',
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: 0,
-              background: '#f8fafc',
-            }}
-          >
-            <div style={{ padding: '0.75rem', borderBottom: '1px solid #e2e8f0' }}>
+        {isMobile ? (
+          /* ───── МОБИЛЬНАЯ ВЕРСИЯ: табы сверху ───── */
+          <>
+            {/* Поиск */}
+            <div style={{ padding: '0.5rem', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
                   padding: '0.4rem 0.6rem',
-                  border: '1px solid #e2e8f0',
+                  border: '1px solid var(--border)',
                   borderRadius: 8,
-                  background: '#fff',
+                  background: 'var(--card-bg-soft)',
                 }}
               >
-                <Search size={14} color="#64748b" />
+                <Search size={14} color="var(--subtext)" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -162,17 +160,29 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
                     border: 'none',
                     outline: 'none',
                     background: 'transparent',
-                    color: '#0c1426',
-                    fontSize: 13,
+                    color: 'var(--text)',
+                    fontSize: 14,
                     width: '100%',
                   }}
                 />
               </div>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
+            {/* Горизонтальные табы */}
+            <div
+              className="scrollbar"
+              style={{
+                display: 'flex',
+                gap: 6,
+                padding: '0.5rem',
+                overflowX: 'auto',
+                borderBottom: '1px solid var(--border)',
+                flexShrink: 0,
+                background: 'var(--card-bg-soft)',
+              }}
+            >
               {filtered.length === 0 && (
-                <div style={{ padding: '1rem', color: '#94a3b8', fontSize: 13, textAlign: 'center' }}>
+                <div style={{ padding: '0.5rem 1rem', color: 'var(--subtext)', fontSize: 13 }}>
                   Ничего не найдено
                 </div>
               )}
@@ -183,62 +193,170 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
                     key={s.id}
                     onClick={() => setActiveId(s.id)}
                     style={{
-                      width: '100%',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 10,
-                      padding: '0.6rem 0.75rem',
-                      border: 'none',
-                      borderRadius: 8,
-                      background: isActive ? '#0c1426' : 'transparent',
-                      color: isActive ? '#fff' : '#0c1426',
+                      gap: 6,
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid ' + (isActive ? 'var(--primary-dark)' : 'var(--border)'),
+                      borderRadius: 20,
+                      background: isActive ? 'var(--primary-dark)' : 'var(--card-bg)',
+                      color: isActive ? '#fff' : 'var(--text)',
                       cursor: 'pointer',
-                      textAlign: 'left',
-                      marginBottom: 2,
                       fontSize: 13,
+                      fontWeight: isActive ? 600 : 500,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                     }}
                   >
-                    <span style={{ fontSize: 18 }}>{s.icon}</span>
-                    <span style={{ flex: 1, fontWeight: isActive ? 600 : 500 }}>
-                      {s.title}
-                    </span>
-                    {isActive && <ChevronRight size={14} />}
+                    <span style={{ fontSize: 15 }}>{s.icon}</span>
+                    <span>{s.title}</span>
                   </button>
                 );
               })}
             </div>
-          </aside>
 
-          {/* Правая колонка — контент */}
-          <main
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '1.5rem 2rem',
-              minHeight: 0,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-              <span style={{ fontSize: 32 }}>{active.icon}</span>
-              <div>
-                <h2 style={{ margin: 0, color: '#0c1426', fontSize: 20 }}>{active.title}</h2>
-                <div style={{ color: '#64748b', fontSize: 13 }}>{active.subtitle}</div>
+            {/* Контент */}
+            <main
+              className="scrollbar"
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '1rem',
+                minHeight: 0,
+              }}
+            >
+              <SectionContent active={active} onGo={setActiveId} />
+            </main>
+          </>
+        ) : (
+          /* ───── ДЕСКТОПНАЯ ВЕРСИЯ: боковая колонка ───── */
+          <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+            <aside
+              className="scrollbar"
+              style={{
+                width: 240,
+                borderRight: '1px solid var(--border)',
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0,
+                background: 'var(--card-bg-soft)',
+                flexShrink: 0,
+              }}
+            >
+              <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '0.4rem 0.6rem',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    background: 'var(--card-bg)',
+                  }}
+                >
+                  <Search size={14} color="var(--subtext)" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Поиск..."
+                    style={{
+                      border: 'none',
+                      outline: 'none',
+                      background: 'transparent',
+                      color: 'var(--text)',
+                      fontSize: 13,
+                      width: '100%',
+                    }}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {active.blocks.map((block, i) => (
-                <HelpBlockView key={i} block={block} />
-              ))}
-            </div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
+                {filtered.length === 0 && (
+                  <div style={{ padding: '1rem', color: 'var(--subtext-muted)', fontSize: 13, textAlign: 'center' }}>
+                    Ничего не найдено
+                  </div>
+                )}
+                {filtered.map((s) => {
+                  const isActive = s.id === active.id;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => setActiveId(s.id)}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '0.6rem 0.75rem',
+                        border: 'none',
+                        borderRadius: 8,
+                        background: isActive ? 'var(--primary-dark)' : 'transparent',
+                        color: isActive ? '#fff' : 'var(--text)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        marginBottom: 2,
+                        fontSize: 13,
+                      }}
+                    >
+                      <span style={{ fontSize: 18 }}>{s.icon}</span>
+                      <span style={{ flex: 1, fontWeight: isActive ? 600 : 500 }}>
+                        {s.title}
+                      </span>
+                      {isActive && <ChevronRight size={14} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </aside>
 
-            <div style={{ marginTop: 32, paddingTop: 16, borderTop: '1px solid #e2e8f0' }}>
-              <NextSectionLink currentId={active.id} onGo={setActiveId} />
-            </div>
-          </main>
-        </div>
+            <main
+              className="scrollbar"
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '1.5rem 2rem',
+                minHeight: 0,
+              }}
+            >
+              <SectionContent active={active} onGo={setActiveId} />
+            </main>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+/* ─── Контент раздела (общий для обеих версий) ─── */
+function SectionContent({
+  active,
+  onGo,
+}: {
+  active: typeof HELP_CONTENT[number];
+  onGo: (id: string) => void;
+}) {
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+        <span style={{ fontSize: 32 }}>{active.icon}</span>
+        <div>
+          <h2 style={{ margin: 0, color: 'var(--heading)', fontSize: 20 }}>{active.title}</h2>
+          <div style={{ color: 'var(--subtext)', fontSize: 13 }}>{active.subtitle}</div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {active.blocks.map((block, i) => (
+          <HelpBlockView key={i} block={block} />
+        ))}
+      </div>
+
+      <div style={{ marginTop: 32, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+        <NextSectionLink currentId={active.id} onGo={onGo} />
+      </div>
+    </>
   );
 }
 
@@ -247,7 +365,7 @@ function HelpBlockView({ block }: { block: HelpBlock }) {
   const base: React.CSSProperties = {
     fontSize: 14,
     lineHeight: 1.65,
-    color: '#334155',
+    color: 'var(--text-soft)',
   };
 
   if (block.type === 'paragraph') return <p style={{ ...base, margin: 0 }}>{block.text}</p>;
@@ -277,7 +395,7 @@ function HelpBlockView({ block }: { block: HelpBlock }) {
       <div
         style={{
           padding: '0.75rem 1rem',
-          borderLeft: '4px solid #ef4444',
+          borderLeft: '4px solid var(--danger)',
           background: 'rgba(239,68,68,0.08)',
           borderRadius: 8,
           ...base,
@@ -293,7 +411,7 @@ function HelpBlockView({ block }: { block: HelpBlock }) {
       <div
         style={{
           padding: '0.75rem 1rem',
-          borderLeft: '4px solid #3b82f6',
+          borderLeft: '4px solid var(--primary)',
           background: 'rgba(59,130,246,0.08)',
           borderRadius: 8,
           ...base,
@@ -313,14 +431,14 @@ function HelpBlockView({ block }: { block: HelpBlock }) {
           gap: 12,
           padding: '0.75rem 1rem',
           borderLeft: `4px solid ${block.color}`,
-          background: '#f8fafc',
+          background: 'var(--card-bg-soft)',
           borderRadius: 8,
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: 14, minWidth: 140, color: '#0c1426' }}>
+        <div style={{ fontWeight: 700, fontSize: 14, minWidth: 120, color: 'var(--heading)' }}>
           {block.label}
         </div>
-        <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.6 }}>
+        <div style={{ fontSize: 13, color: 'var(--subtext)', lineHeight: 1.6 }}>
           {block.description}
         </div>
       </div>
@@ -351,15 +469,19 @@ function NextSectionLink({
         justifyContent: 'space-between',
         width: '100%',
         padding: '0.75rem 1rem',
-        background: '#f8fafc',
-        border: '1px solid #e2e8f0',
+        background: 'var(--card-bg-soft)',
+        border: '1px solid var(--border)',
         borderRadius: 8,
         cursor: 'pointer',
         fontSize: 13,
+        color: 'var(--text)',
+        gap: 8,
       }}
     >
-      <span style={{ color: '#94a3b8', fontSize: 12 }}>Следующий раздел</span>
-      <span style={{ fontWeight: 600, color: '#0c1426' }}>
+      <span style={{ color: 'var(--subtext-muted)', fontSize: 12, whiteSpace: 'nowrap' }}>
+        Далее
+      </span>
+      <span style={{ fontWeight: 600, color: 'var(--heading)', textAlign: 'right' }}>
         {next.icon} {next.title} →
       </span>
     </button>

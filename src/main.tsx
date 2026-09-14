@@ -4,6 +4,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './App';
+import './styles/theme.css'; 
 
 // Регистрируем Service Worker для офлайн-работы
 registerSW({ immediate: true });

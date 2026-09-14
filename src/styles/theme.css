@@ -1,0 +1,87 @@
+/* src/styles/theme.css */
+
+/* ─── Светлая тема (по умолчанию) ───────── */
+:root,
+[data-theme="light"] {
+  --bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --card-bg-soft: #f8fafc;
+  --text: #0c1426;
+  --text-soft: #334155;
+  --subtext: #64748b;
+  --subtext-muted: #94a3b8;
+  --heading: #0c1426;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  --primary: #3b82f6;
+  --primary-dark: #0c1426;
+  --success: #22c55e;
+  --warning: #eab308;
+  --danger: #ef4444;
+
+  --modal-overlay: rgba(0, 0, 0, 0.6);
+  --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Тёмная тема ──────────────────────── */
+[data-theme="dark"] {
+  --bg: #0c1426;
+  --card-bg: #1e293b;
+  --card-bg-soft: #1a2438;
+  --text: #f1f5f9;
+  --text-soft: #cbd5e1;
+  --subtext: #94a3b8;
+  --subtext-muted: #64748b;
+  --heading: #ffffff;
+  --border: #334155;
+  --border-strong: #475569;
+
+  --primary: #60a5fa;
+  --primary-dark: #0f172a;
+  --success: #4ade80;
+  --warning: #facc15;
+  --danger: #f87171;
+
+  --modal-overlay: rgba(0, 0, 0, 0.75);
+  --modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* ─── Глобальные ───────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Скроллбар ────────────────────────── */
+.scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+.scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--subtext);
+}
+
+/* ─── Утилиты ──────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
