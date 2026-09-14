@@ -27,9 +27,3 @@ Thumbs.db
 
 # Тесты
 coverage/
-
-# PWA
-sw.js
-registerSW.js
-workbox-*.js
-manifest.webmanifest
