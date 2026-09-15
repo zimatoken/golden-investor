@@ -1,12 +1,14 @@
 // src/App.tsx
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
 import { StatusScreen } from './screens/StatusScreen';
 import { ActionScreen } from './screens/ActionScreen';
 import { MapScreen } from './screens/MapScreen';
 import { DecisionLogScreen } from './screens/DecisionLogScreen';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal } from './components/HelpModal';
+import { useTheme } from './hooks/useTheme';
 
 type Screen = 'status' | 'action' | 'map' | 'log';
 
@@ -29,12 +31,7 @@ const NAV_ITEMS: { id: Screen; icon: string; label: string }[] = [
 export function App() {
   const [screen, setScreen] = useState<Screen>('status');
   const [helpOpen, setHelpOpen] = useState(false);
-
-  // Устанавливаем тему на <html>. Пока — светлая.
-  // Когда добавим useTheme() — здесь будет переключение.
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'light');
-  }, []);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div
@@ -89,6 +86,27 @@ export function App() {
             </button>
           );
         })}
+
+        {/* Кнопка темы */}
+        <button
+          onClick={toggleTheme}
+          aria-label={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
+          title={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
+          style={{
+            padding: '0.5rem 0.65rem',
+            background: 'rgba(255,255,255,0.08)',
+            color: '#f1f5f9',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 8,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'background 0.15s ease',
+          }}
+        >
+          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
 
         {/* Кнопка «?» — всегда справа */}
         <HelpButton onClick={() => setHelpOpen(true)} />

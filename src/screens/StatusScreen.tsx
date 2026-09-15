@@ -16,9 +16,9 @@ export function StatusScreen() {
   }, [status, recordStatus]);
 
   const statusConfig = {
-    act: { color: '#22c55e', text: '🟢 Можно действовать' },
-    wait: { color: '#eab308', text: '🟡 Ждать' },
-    'do-nothing': { color: '#ef4444', text: '🔴 Не действовать' },
+    act: { color: 'var(--success)', text: '🟢 Можно действовать' },
+    wait: { color: 'var(--warning)', text: '🟡 Ждать' },
+    'do-nothing': { color: 'var(--danger)', text: '🔴 Не действовать' },
   };
 
   const cfg = statusConfig[status];
@@ -43,7 +43,7 @@ export function StatusScreen() {
         {cfg.text}
       </div>
 
-      <div style={{ marginTop: '2rem', fontSize: '1.1rem', lineHeight: 1.8 }}>
+      <div style={{ marginTop: '2rem', fontSize: '1.1rem', lineHeight: 1.8, color: 'var(--text)' }}>
         <p><strong>Ключевая ставка:</strong> {market.keyRate}%</p>
         <p><strong>Инфляция:</strong> {market.inflation}%</p>
         <p><strong>Следующее заседание ЦБ:</strong> {market.nextCBDate}</p>
@@ -51,7 +51,15 @@ export function StatusScreen() {
         <p><strong>Средняя ставка по вкладам:</strong> {market.depositRate}%</p>
       </div>
 
-      <div style={{ marginTop: '2rem', padding: '1rem', background: '#f1f5f9', borderRadius: 12 }}>
+      <div
+        style={{
+          marginTop: '2rem',
+          padding: '1rem',
+          background: 'var(--card-bg-soft)',
+          borderRadius: 12,
+          color: 'var(--text)',
+        }}
+      >
         <p><strong>Рекомендация:</strong></p>
         <p>
           {status === 'do-nothing' && 'Дождись решения ЦБ. Сегодня ничего не делай. Приходи завтра.'}
@@ -65,12 +73,21 @@ export function StatusScreen() {
         style={{
           marginTop: '2rem',
           padding: '1rem',
-          background: 'var(--card-bg, #fff)',
-          border: '1px solid var(--border, #e2e8f0)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--border)',
           borderRadius: 12,
+          color: 'var(--text)',
         }}
       >
-        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div
+          style={{
+            fontSize: 12,
+            color: 'var(--subtext)',
+            marginBottom: 8,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
           История
         </div>
         {monthAgo ? (
@@ -79,7 +96,7 @@ export function StatusScreen() {
             <span>{statusLabel(monthAgo.status)}</span>
           </div>
         ) : (
-          <div style={{ fontSize: 13, color: '#94a3b8' }}>
+          <div style={{ fontSize: 13, color: 'var(--subtext-muted)' }}>
             Пока нет истории. Возвращайся — статус сохраняется.
           </div>
         )}
@@ -96,7 +113,7 @@ export function StatusScreen() {
           width: '100%',
           padding: '1rem',
           fontSize: '1rem',
-          background: '#0c1426',
+          background: 'var(--primary-dark)',
           color: '#fff',
           border: 'none',
           borderRadius: 12,

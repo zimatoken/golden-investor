@@ -8,15 +8,15 @@ interface Props {
 
 export function DecisionStats({ stats }: Props) {
   const scoreColor =
-    stats.disciplineScore >= 80 ? '#22c55e' :
-    stats.disciplineScore >= 50 ? '#eab308' :
-    '#ef4444';
+    stats.disciplineScore >= 80 ? 'var(--success)' :
+    stats.disciplineScore >= 50 ? 'var(--warning)' :
+    'var(--danger)';
 
   return (
     <div
       style={{
-        background: '#fff',
-        border: '1px solid #e2e8f0',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border)',
         borderRadius: 12,
         padding: '1.5rem',
         marginBottom: 20,
@@ -24,28 +24,28 @@ export function DecisionStats({ stats }: Props) {
     >
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 }}>
         <div>
-          <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+          <div style={{ fontSize: 12, color: 'var(--subtext)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
             Всего решений
           </div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: '#0c1426' }}>{stats.total}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--heading)' }}>{stats.total}</div>
         </div>
 
         <div>
-          <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+          <div style={{ fontSize: 12, color: 'var(--subtext)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
             По плану
           </div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: '#22c55e' }}>{stats.inPlan}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--success)' }}>{stats.inPlan}</div>
         </div>
 
         <div>
-          <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+          <div style={{ fontSize: 12, color: 'var(--subtext)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
             Импульсивных
           </div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: '#ef4444' }}>{stats.impulsive}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--danger)' }}>{stats.impulsive}</div>
         </div>
 
         <div>
-          <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+          <div style={{ fontSize: 12, color: 'var(--subtext)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
             Дисциплина
           </div>
           <div style={{ fontSize: 28, fontWeight: 700, color: scoreColor }}>
@@ -56,10 +56,10 @@ export function DecisionStats({ stats }: Props) {
 
       {/* Прогресс-бар дисциплины */}
       <div style={{ marginTop: 20 }}>
-        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+        <div style={{ fontSize: 12, color: 'var(--subtext)', marginBottom: 6 }}>
           Индекс дисциплины: сколько решений было по плану
         </div>
-        <div style={{ height: 10, background: '#f1f5f9', borderRadius: 5, overflow: 'hidden' }}>
+        <div style={{ height: 10, background: 'var(--card-bg-soft)', borderRadius: 5, overflow: 'hidden' }}>
           <div
             style={{
               height: '100%',
@@ -73,8 +73,8 @@ export function DecisionStats({ stats }: Props) {
 
       {/* Разбивка по инструментам */}
       {Object.keys(stats.byInstrument).length > 0 && (
-        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #f1f5f9' }}>
-          <div style={{ fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 12, color: 'var(--subtext)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
             По инструментам
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -83,10 +83,11 @@ export function DecisionStats({ stats }: Props) {
                 key={inst}
                 style={{
                   padding: '6px 12px',
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
+                  background: 'var(--card-bg-soft)',
+                  border: '1px solid var(--border)',
                   borderRadius: 8,
                   fontSize: 13,
+                  color: 'var(--text)',
                 }}
               >
                 <strong>{inst === 'ofz' ? '📈 ОФЗ' : inst === 'gold' ? '🥇 Золото' : '🏦 Вклад'}</strong>

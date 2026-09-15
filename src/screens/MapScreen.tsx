@@ -94,9 +94,9 @@ export function MapScreen() {
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: 900, margin: '0 auto' }}>
+    <div style={{ padding: '2rem', maxWidth: 900, margin: '0 auto', color: 'var(--text)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <h2 style={{ margin: 0 }}>Твоя карта. Написана, когда ты спокоен.</h2>
+        <h2 style={{ margin: 0, color: 'var(--heading)' }}>Твоя карта. Написана, когда ты спокоен.</h2>
         <button
           onClick={addRow}
           style={{
@@ -104,7 +104,7 @@ export function MapScreen() {
             alignItems: 'center',
             gap: 6,
             padding: '0.5rem 1rem',
-            background: '#22c55e',
+            background: 'var(--success)',
             color: '#fff',
             border: 'none',
             borderRadius: 8,
@@ -115,18 +115,25 @@ export function MapScreen() {
           <Plus size={16} /> Добавить
         </button>
       </div>
-      <p style={{ color: '#64748b', marginBottom: 24 }}>
+      <p style={{ color: 'var(--subtext)', marginBottom: 24 }}>
         Когда событие произойдёт — ты не думаешь. Ты смотришь в карту.
       </p>
 
-      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, overflow: 'hidden' }}>
+      <div
+        style={{
+          background: 'var(--card-bg)',
+          border: '1px solid var(--border)',
+          borderRadius: 12,
+          overflow: 'hidden',
+        }}
+      >
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: '#f1f5f9' }}>
-              <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: 13, color: '#475569' }}>
+            <tr style={{ background: 'var(--card-bg-soft)' }}>
+              <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: 13, color: 'var(--subtext)' }}>
                 Если это произойдёт...
               </th>
-              <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: 13, color: '#475569' }}>
+              <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: 13, color: 'var(--subtext)' }}>
                 Я делаю это...
               </th>
               <th style={{ padding: '0.75rem', width: 100 }}></th>
@@ -136,40 +143,65 @@ export function MapScreen() {
             {plan.map((row) => {
               const isEditing = editingId === row.id;
               return (
-                <tr key={row.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                <tr key={row.id} style={{ borderBottom: '1px solid var(--border)' }}>
                   {isEditing && draft ? (
                     <>
                       <td style={{ padding: '0.5rem' }}>
                         <input
                           value={draft.condition}
                           onChange={(e) => setDraft({ ...draft, condition: e.target.value })}
-                          style={{ width: '100%', padding: '0.4rem', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 13 }}
+                          style={{
+                            width: '100%',
+                            padding: '0.4rem',
+                            border: '1px solid var(--border-strong)',
+                            borderRadius: 6,
+                            fontSize: 13,
+                            background: 'var(--card-bg)',
+                            color: 'var(--text)',
+                          }}
                         />
                       </td>
                       <td style={{ padding: '0.5rem' }}>
                         <input
                           value={draft.action}
                           onChange={(e) => setDraft({ ...draft, action: e.target.value })}
-                          style={{ width: '100%', padding: '0.4rem', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 13, marginBottom: 4 }}
+                          style={{
+                            width: '100%',
+                            padding: '0.4rem',
+                            border: '1px solid var(--border-strong)',
+                            borderRadius: 6,
+                            fontSize: 13,
+                            marginBottom: 4,
+                            background: 'var(--card-bg)',
+                            color: 'var(--text)',
+                          }}
                         />
                         <input
                           value={draft.instrument}
                           onChange={(e) => setDraft({ ...draft, instrument: e.target.value })}
                           placeholder="Инструмент"
-                          style={{ width: '100%', padding: '0.4rem', border: '1px solid #cbd5e1', borderRadius: 6, fontSize: 12, color: '#64748b' }}
+                          style={{
+                            width: '100%',
+                            padding: '0.4rem',
+                            border: '1px solid var(--border-strong)',
+                            borderRadius: 6,
+                            fontSize: 12,
+                            color: 'var(--subtext)',
+                            background: 'var(--card-bg)',
+                          }}
                         />
                       </td>
                       <td style={{ padding: '0.5rem', display: 'flex', gap: 6 }}>
                         <button
                           onClick={confirmEdit}
-                          style={{ padding: '0.4rem', background: '#22c55e', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                          style={{ padding: '0.4rem', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}
                           aria-label="Сохранить"
                         >
                           <Check size={14} />
                         </button>
                         <button
                           onClick={cancelEdit}
-                          style={{ padding: '0.4rem', background: '#94a3b8', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                          style={{ padding: '0.4rem', background: 'var(--subtext)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}
                           aria-label="Отмена"
                         >
                           <X size={14} />
@@ -182,20 +214,34 @@ export function MapScreen() {
                       <td style={{ padding: '0.75rem', fontSize: 14 }}>
                         {row.action}
                         {row.instrument !== '—' && (
-                          <span style={{ color: '#64748b', fontSize: 12 }}> ({row.instrument})</span>
+                          <span style={{ color: 'var(--subtext)', fontSize: 12 }}> ({row.instrument})</span>
                         )}
                       </td>
                       <td style={{ padding: '0.5rem', display: 'flex', gap: 6 }}>
                         <button
                           onClick={() => startEdit(row)}
-                          style={{ padding: '0.4rem', background: 'transparent', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: 6, cursor: 'pointer' }}
+                          style={{
+                            padding: '0.4rem',
+                            background: 'transparent',
+                            color: 'var(--subtext)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                          }}
                           aria-label="Редактировать"
                         >
                           <Edit2 size={14} />
                         </button>
                         <button
                           onClick={() => deleteRow(row.id)}
-                          style={{ padding: '0.4rem', background: 'transparent', color: '#ef4444', border: '1px solid #fecaca', borderRadius: 6, cursor: 'pointer' }}
+                          style={{
+                            padding: '0.4rem',
+                            background: 'transparent',
+                            color: 'var(--danger)',
+                            border: '1px solid rgba(239,68,68,0.3)',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                          }}
                           aria-label="Удалить"
                         >
                           <Trash2 size={14} />
@@ -216,7 +262,7 @@ export function MapScreen() {
           marginTop: 16,
           background: 'none',
           border: 'none',
-          color: '#94a3b8',
+          color: 'var(--subtext-muted)',
           fontSize: 12,
           cursor: 'pointer',
           textDecoration: 'underline',

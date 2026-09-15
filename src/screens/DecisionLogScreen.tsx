@@ -28,11 +28,11 @@ export function DecisionLogScreen() {
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ padding: '2rem', maxWidth: 800, margin: '0 auto', color: 'var(--text)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div>
-          <h2 style={{ margin: 0 }}>📖 Дневник решений</h2>
-          <p style={{ color: '#64748b', marginTop: 4 }}>
+          <h2 style={{ margin: 0, color: 'var(--heading)' }}>📖 Дневник решений</h2>
+          <p style={{ color: 'var(--subtext)', marginTop: 4 }}>
             Каждое действие записывается автоматически. Через год ты увидишь свой путь.
           </p>
         </div>
@@ -45,7 +45,7 @@ export function DecisionLogScreen() {
                 alignItems: 'center',
                 gap: 6,
                 padding: '0.5rem 0.9rem',
-                background: '#0c1426',
+                background: 'var(--primary-dark)',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 8,
@@ -64,8 +64,8 @@ export function DecisionLogScreen() {
                 gap: 6,
                 padding: '0.5rem 0.9rem',
                 background: 'transparent',
-                color: '#ef4444',
-                border: '1px solid #fecaca',
+                color: 'var(--danger)',
+                border: '1px solid rgba(239,68,68,0.3)',
                 borderRadius: 8,
                 cursor: 'pointer',
                 fontSize: 13,
@@ -84,15 +84,15 @@ export function DecisionLogScreen() {
           style={{
             marginTop: 40,
             padding: '3rem 2rem',
-            background: '#f8fafc',
-            border: '2px dashed #cbd5e1',
+            background: 'var(--card-bg-soft)',
+            border: '2px dashed var(--border-strong)',
             borderRadius: 16,
             textAlign: 'center',
           }}
         >
           <div style={{ fontSize: 48, marginBottom: 12 }}>📖</div>
-          <h3 style={{ margin: 0, color: '#475569' }}>Дневник пока пуст</h3>
-          <p style={{ color: '#94a3b8', marginTop: 8, maxWidth: 400, margin: '8px auto 0' }}>
+          <h3 style={{ margin: 0, color: 'var(--heading)' }}>Дневник пока пуст</h3>
+          <p style={{ color: 'var(--subtext-muted)', marginTop: 8, maxWidth: 400, margin: '8px auto 0' }}>
             Каждое решение на экране «Действие» попадёт сюда автоматически. Начни с малого — попробуй
             выбрать инструмент и подтвердить действие.
           </p>
@@ -105,7 +105,7 @@ export function DecisionLogScreen() {
       {/* Фильтры */}
       {decisions.length > 0 && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Filter size={16} color="#64748b" />
+          <Filter size={16} color="var(--subtext)" />
           {([
             ['all', `Все (${stats.total})`],
             ['in-plan', `По плану (${stats.inPlan})`],
@@ -116,9 +116,9 @@ export function DecisionLogScreen() {
               onClick={() => setFilter(key)}
               style={{
                 padding: '0.4rem 0.8rem',
-                background: filter === key ? '#0c1426' : '#fff',
-                color: filter === key ? '#fff' : '#475569',
-                border: '1px solid #e2e8f0',
+                background: filter === key ? 'var(--primary-dark)' : 'var(--card-bg)',
+                color: filter === key ? '#fff' : 'var(--subtext)',
+                border: '1px solid var(--border)',
                 borderRadius: 8,
                 cursor: 'pointer',
                 fontSize: 13,
@@ -138,12 +138,12 @@ export function DecisionLogScreen() {
             style={{
               fontSize: 13,
               fontWeight: 700,
-              color: '#475569',
+              color: 'var(--subtext)',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
               marginBottom: 10,
               paddingBottom: 6,
-              borderBottom: '1px solid #e2e8f0',
+              borderBottom: '1px solid var(--border)',
             }}
           >
             {group.month} · {group.decisions.length}
@@ -156,7 +156,7 @@ export function DecisionLogScreen() {
 
       {/* Если фильтр дал пустой результат */}
       {decisions.length > 0 && filtered.length === 0 && (
-        <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>
+        <div style={{ textAlign: 'center', color: 'var(--subtext-muted)', padding: '2rem' }}>
           В этой категории пока нет записей.
         </div>
       )}

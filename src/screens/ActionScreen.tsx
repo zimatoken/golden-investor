@@ -21,8 +21,8 @@ export function ActionScreen() {
   if (step === 'choose-instrument') {
     return (
       <div style={{ padding: '2rem', maxWidth: 600, margin: '0 auto' }}>
-        <h2 style={{ marginBottom: 8 }}>Что ты хочешь сделать?</h2>
-        <p style={{ color: '#64748b', marginBottom: 24 }}>
+        <h2 style={{ marginBottom: 8, color: 'var(--heading)' }}>Что ты хочешь сделать?</h2>
+        <p style={{ color: 'var(--subtext)', marginBottom: 24 }}>
           Выбери инструмент — приложение покажет честные сценарии.
         </p>
 
@@ -39,17 +39,18 @@ export function ActionScreen() {
                 alignItems: 'center',
                 gap: 16,
                 padding: '1rem 1.25rem',
-                background: '#fff',
-                border: '2px solid #e2e8f0',
+                background: 'var(--card-bg)',
+                border: '2px solid var(--border)',
                 borderRadius: 12,
                 cursor: 'pointer',
                 textAlign: 'left',
+                color: 'var(--text)',
               }}
             >
               <span style={{ fontSize: 32 }}>{inst.icon}</span>
               <div>
-                <div style={{ fontWeight: 600, fontSize: 16 }}>{inst.title}</div>
-                <div style={{ color: '#64748b', fontSize: 13 }}>{inst.subtitle}</div>
+                <div style={{ fontWeight: 600, fontSize: 16, color: 'var(--heading)' }}>{inst.title}</div>
+                <div style={{ color: 'var(--subtext)', fontSize: 13 }}>{inst.subtitle}</div>
               </div>
             </button>
           ))}
@@ -64,13 +65,13 @@ export function ActionScreen() {
       <div style={{ padding: '2rem', maxWidth: 600, margin: '0 auto' }}>
         <button
           onClick={() => setStep('choose-instrument')}
-          style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', marginBottom: 16 }}
+          style={{ background: 'none', border: 'none', color: 'var(--subtext)', cursor: 'pointer', marginBottom: 16 }}
         >
           ← Назад
         </button>
 
-        <h2>Это действие было в твоём плане?</h2>
-        <p style={{ color: '#64748b' }}>
+        <h2 style={{ color: 'var(--heading)' }}>Это действие было в твоём плане?</h2>
+        <p style={{ color: 'var(--subtext)' }}>
           Плане, который ты записал, когда был спокоен.
         </p>
 
@@ -94,7 +95,7 @@ export function ActionScreen() {
               });
               setStep('scenarios');
             }}
-            style={{ flex: 1, padding: '1rem', background: '#22c55e', color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer', fontWeight: 600 }}
+            style={{ flex: 1, padding: '1rem', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer', fontWeight: 600 }}
           >
             Да, было
           </button>
@@ -118,7 +119,7 @@ export function ActionScreen() {
               setPausedUntil(new Date(Date.now() + 24 * 60 * 60 * 1000));
               setStep('paused');
             }}
-            style={{ flex: 1, padding: '1rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer', fontWeight: 600 }}
+            style={{ flex: 1, padding: '1rem', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer', fontWeight: 600 }}
           >
             Нет, это импульс
           </button>
@@ -130,15 +131,15 @@ export function ActionScreen() {
   /* ─── Шаг 3: пауза 24 часа ────────────── */
   if (step === 'paused' && pausedUntil) {
     return (
-      <div style={{ padding: '2rem', maxWidth: 600, margin: '0 auto', textAlign: 'center' }}>
-        <h2>⏸ Пауза 24 часа</h2>
+      <div style={{ padding: '2rem', maxWidth: 600, margin: '0 auto', textAlign: 'center', color: 'var(--text)' }}>
+        <h2 style={{ color: 'var(--heading)' }}>⏸ Пауза 24 часа</h2>
         <p>Вернись завтра. Если всё ещё захочешь — подтвердишь.</p>
-        <p style={{ color: '#64748b', marginTop: '1rem' }}>
+        <p style={{ color: 'var(--subtext)', marginTop: '1rem' }}>
           Разблокировка: {pausedUntil.toLocaleString('ru-RU')}
         </p>
         <button
           onClick={() => setStep('choose-instrument')}
-          style={{ marginTop: 24, padding: '0.75rem 1.5rem', background: '#0c1426', color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer' }}
+          style={{ marginTop: 24, padding: '0.75rem 1.5rem', background: 'var(--primary-dark)', color: '#fff', border: 'none', borderRadius: 12, cursor: 'pointer' }}
         >
           Понял, вернусь позже
         </button>
@@ -155,12 +156,12 @@ export function ActionScreen() {
       <div style={{ padding: '2rem', maxWidth: 600, margin: '0 auto' }}>
         <button
           onClick={() => setStep('choose-instrument')}
-          style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', marginBottom: 16 }}
+          style={{ background: 'none', border: 'none', color: 'var(--subtext)', cursor: 'pointer', marginBottom: 16 }}
         >
           ← Назад
         </button>
 
-        <h2>
+        <h2 style={{ color: 'var(--heading)' }}>
           {inst?.icon} {inst?.title}: три сценария
         </h2>
 
@@ -173,25 +174,26 @@ export function ActionScreen() {
               borderRadius: 12,
               border: '2px solid',
               borderColor:
-                s.label === 'optimistic' ? '#22c55e' : s.label === 'base' ? '#eab308' : '#ef4444',
-              background: '#fff',
+                s.label === 'optimistic' ? 'var(--success)' : s.label === 'base' ? 'var(--warning)' : 'var(--danger)',
+              background: 'var(--card-bg)',
+              color: 'var(--text)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <strong>{s.title}</strong>
+              <strong style={{ color: 'var(--heading)' }}>{s.title}</strong>
               <span
                 style={{
                   fontSize: '1.5rem',
                   fontWeight: 700,
-                  color: s.totalReturn >= 0 ? '#22c55e' : '#ef4444',
+                  color: s.totalReturn >= 0 ? 'var(--success)' : 'var(--danger)',
                 }}
               >
                 {s.totalReturn > 0 ? '+' : ''}
                 {s.totalReturn}%
               </span>
             </div>
-            <p style={{ color: '#64748b', marginTop: '0.5rem' }}>{s.outcome}</p>
-            <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Вероятность: {s.probability}%</p>
+            <p style={{ color: 'var(--subtext)', marginTop: '0.5rem' }}>{s.outcome}</p>
+            <p style={{ fontSize: '0.85rem', color: 'var(--subtext-muted)' }}>Вероятность: {s.probability}%</p>
           </div>
         ))}
 
@@ -200,10 +202,10 @@ export function ActionScreen() {
             style={{
               marginTop: '1.5rem',
               padding: '1rem',
-              background: '#fef2f2',
-              border: '2px solid #ef4444',
+              background: 'rgba(239,68,68,0.08)',
+              border: '2px solid var(--danger)',
               borderRadius: 12,
-              color: '#991b1b',
+              color: 'var(--danger)',
             }}
           >
             ⚠️ В пессимистичном сценарии твоя доходность ниже, чем депозит (
