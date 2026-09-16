@@ -2,6 +2,7 @@
 
 export interface MarketState {
   keyRate: number;           // Ключевая ставка ЦБ, %
+  keyRateDate: string;       // ← ДОБАВЬ ЭТУ СТРОКУ (когда ставка установлена)
   inflation: number;         // Инфляция, %
   ofz10y: number;            // Доходность 10-летних ОФЗ, %
   ofzShort: number;          // Доходность коротких ОФЗ, %
@@ -17,6 +18,7 @@ export interface MarketState {
  */
 export const DEFAULT_MARKET: MarketState = {
   keyRate: 14.0,
+  keyRateDate: '2026-09-16', 
   inflation: 6.5,
   ofz10y: 15.9,
   ofzShort: 12.5,

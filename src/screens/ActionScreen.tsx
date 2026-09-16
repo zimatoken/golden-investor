@@ -5,6 +5,8 @@ import { calculateTruthScenarios, deriveStatus } from '../core/truthEngine';
 import { MANUAL_MARKET } from '../data/manualMarket';
 import { INSTRUMENTS } from '../data/instruments';
 import { useDecisionLog } from '../hooks/useDecisionLog';
+import { runMonteCarlo, INSTRUMENT_PARAMS, formatMoney } from '../core/monteCarlo';
+import { MonteCarloChart } from '../components/MonteCarloChart';
 import type { InstrumentType } from '../types/market';
 
 type Step = 'choose-instrument' | 'check-plan' | 'paused' | 'scenarios';
@@ -12,6 +14,8 @@ type Step = 'choose-instrument' | 'check-plan' | 'paused' | 'scenarios';
 export function ActionScreen() {
   const [step, setStep] = useState<Step>('choose-instrument');
   const [instrument, setInstrument] = useState<InstrumentType | null>(null);
+  const [amount, setAmount] = useState<number>(100000);
+  const [horizon, setHorizon] = useState<number>(10);
   const [pausedUntil, setPausedUntil] = useState<Date | null>(null);
   const { add } = useDecisionLog();
 
@@ -20,7 +24,7 @@ export function ActionScreen() {
   /* ─── Шаг 1: выбор инструмента ─────────── */
   if (step === 'choose-instrument') {
     return (
-      <div style={{ padding: '2rem', maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ padding: '2rem', maxWidth: 600, margin: '0 auto', color: 'var(--text)' }}>
         <h2 style={{ marginBottom: 8, color: 'var(--heading)' }}>Что ты хочешь сделать?</h2>
         <p style={{ color: 'var(--subtext)', marginBottom: 24 }}>
           Выбери инструмент — приложение покажет честные сценарии.
@@ -62,7 +66,7 @@ export function ActionScreen() {
   /* ─── Шаг 2: проверка плана ───────────── */
   if (step === 'check-plan') {
     return (
-      <div style={{ padding: '2rem', maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ padding: '2rem', maxWidth: 600, margin: '0 auto', color: 'var(--text)' }}>
         <button
           onClick={() => setStep('choose-instrument')}
           style={{ background: 'none', border: 'none', color: 'var(--subtext)', cursor: 'pointer', marginBottom: 16 }}
@@ -78,13 +82,12 @@ export function ActionScreen() {
         <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
           <button
             onClick={() => {
-              // Записываем решение «по плану»
               add({
                 id: crypto.randomUUID(),
                 date: new Date().toISOString(),
                 actionType: 'buy',
                 instrument,
-                amount: null,
+                amount,
                 reason: 'По плану',
                 wasInPlan: true,
                 marketSnapshot: {
@@ -101,13 +104,12 @@ export function ActionScreen() {
           </button>
           <button
             onClick={() => {
-              // Записываем импульсивное решение
               add({
                 id: crypto.randomUUID(),
                 date: new Date().toISOString(),
                 actionType: 'buy',
                 instrument,
-                amount: null,
+                amount,
                 reason: 'Импульс',
                 wasInPlan: false,
                 marketSnapshot: {
@@ -147,13 +149,22 @@ export function ActionScreen() {
     );
   }
 
-  /* ─── Шаг 4: три сценария ─────────────── */
+  /* ─── Шаг 4: три сценария + Монте-Карло ─ */
   if (step === 'scenarios' && instrument) {
     const scenarios = calculateTruthScenarios(instrument, market);
     const inst = INSTRUMENTS.find((i) => i.id === instrument);
+    const params = INSTRUMENT_PARAMS[instrument];
+
+    const mc = runMonteCarlo({
+      instrument,
+      annualReturn: params.annualReturn,
+      volatility: params.volatility,
+      horizonYears: horizon,
+      initialAmount: amount,
+    });
 
     return (
-      <div style={{ padding: '2rem', maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ padding: '2rem', maxWidth: 700, margin: '0 auto', color: 'var(--text)' }}>
         <button
           onClick={() => setStep('choose-instrument')}
           style={{ background: 'none', border: 'none', color: 'var(--subtext)', cursor: 'pointer', marginBottom: 16 }}
@@ -162,9 +173,68 @@ export function ActionScreen() {
         </button>
 
         <h2 style={{ color: 'var(--heading)' }}>
-          {inst?.icon} {inst?.title}: три сценария
+          {inst?.icon} {inst?.title}: анализ
         </h2>
 
+        {/* Поля ввода суммы и горизонта */}
+        <div
+          style={{
+            marginTop: '1rem',
+            padding: '1rem',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 12,
+          }}
+        >
+          <div>
+            <label style={{ fontSize: 12, color: 'var(--subtext)', display: 'block', marginBottom: 4 }}>
+              Сумма, ₽
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="10000"
+              value={amount}
+              onChange={(e) => setAmount(Math.max(0, parseInt(e.target.value) || 0))}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                background: 'var(--card-bg-soft)',
+                color: 'var(--text)',
+                fontSize: 14,
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, color: 'var(--subtext)', display: 'block', marginBottom: 4 }}>
+              Горизонт, лет
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="30"
+              value={horizon}
+              onChange={(e) => setHorizon(Math.min(30, Math.max(1, parseInt(e.target.value) || 10)))}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                background: 'var(--card-bg-soft)',
+                color: 'var(--text)',
+                fontSize: 14,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Три сценария */}
+        <h3 style={{ marginTop: '1.5rem', color: 'var(--heading)' }}>Три сценария</h3>
         {scenarios.map((s) => (
           <div
             key={s.label}
@@ -176,7 +246,6 @@ export function ActionScreen() {
               borderColor:
                 s.label === 'optimistic' ? 'var(--success)' : s.label === 'base' ? 'var(--warning)' : 'var(--danger)',
               background: 'var(--card-bg)',
-              color: 'var(--text)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -188,33 +257,83 @@ export function ActionScreen() {
                   color: s.totalReturn >= 0 ? 'var(--success)' : 'var(--danger)',
                 }}
               >
-                {s.totalReturn > 0 ? '+' : ''}
-                {s.totalReturn}%
+                {s.totalReturn > 0 ? '+' : ''}{s.totalReturn}%
               </span>
             </div>
             <p style={{ color: 'var(--subtext)', marginTop: '0.5rem' }}>{s.outcome}</p>
-            <p style={{ fontSize: '0.85rem', color: 'var(--subtext-muted)' }}>Вероятность: {s.probability}%</p>
           </div>
         ))}
 
-        {scenarios.some((s) => s.isWorseThanDeposit) && (
+        {/* Монте-Карло */}
+        <div
+          style={{
+            marginTop: '2rem',
+            padding: '1.25rem',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <h3 style={{ margin: 0, color: 'var(--heading)', fontSize: 16 }}>
+              🎲 Монте-Карло: 500 симуляций
+            </h3>
+            <span style={{ fontSize: 12, color: 'var(--subtext)' }}>
+              {horizon} лет, доходность {params.annualReturn}%, волатильность {params.volatility}%
+            </span>
+          </div>
+
+          {/* Метрики */}
           <div
             style={{
-              marginTop: '1.5rem',
-              padding: '1rem',
-              background: 'rgba(239,68,68,0.08)',
-              border: '2px solid var(--danger)',
-              borderRadius: 12,
-              color: 'var(--danger)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+              gap: 8,
+              marginBottom: 16,
             }}
           >
-            ⚠️ В пессимистичном сценарии твоя доходность ниже, чем депозит (
-            {market.depositRate}%). Ты готов ждать год и получить меньше, чем в банке?
+            <Metric label="Медиана" value={`${formatMoney(mc.median)} ₽`} color="var(--text)" />
+            <Metric label="Худший (5%)" value={`${formatMoney(mc.p5)} ₽`} color="var(--danger)" />
+            <Metric label="Лучший (95%)" value={`${formatMoney(mc.p95)} ₽`} color="var(--success)" />
+            <Metric label="VaR 95%" value={`${mc.var95Percent.toFixed(1)}%`} color="var(--warning)" />
           </div>
-        )}
+
+          {/* Гистограмма */}
+          <MonteCarloChart result={mc} initialAmount={amount} horizonYears={horizon} />
+
+          {/* Пояснения */}
+          <div style={{ marginTop: 12, fontSize: 12, color: 'var(--subtext)', lineHeight: 1.6 }}>
+            <div>
+              • <strong style={{ color: 'var(--danger)' }}>Убыток</strong> в {(mc.probLoss * 100).toFixed(0)}% случаев
+            </div>
+            <div>
+              • <strong style={{ color: 'var(--warning)' }}>Хуже вклада (12,5%)</strong> в {(mc.probBelowDeposit * 100).toFixed(0)}% случаев
+            </div>
+            <div>
+              • Вложено: {formatMoney(amount)} ₽ → медиана через {horizon} лет: {formatMoney(mc.median)} ₽
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return null;
+}
+
+/* ─── Вспомогательный компонент метрики ─── */
+function Metric({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div
+      style={{
+        padding: '0.5rem 0.75rem',
+        background: 'var(--card-bg-soft)',
+        borderRadius: 8,
+        textAlign: 'center',
+      }}
+    >
+      <div style={{ fontSize: 11, color: 'var(--subtext)', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color }}>{value}</div>
+    </div>
+  );
 }
