@@ -1,6 +1,6 @@
 // src/App.tsx
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { StatusScreen } from './screens/StatusScreen';
 import { ActionScreen } from './screens/ActionScreen';
@@ -28,10 +28,26 @@ const NAV_ITEMS: { id: Screen; icon: string; label: string }[] = [
   { id: 'log', icon: '📖', label: 'Дневник' },
 ];
 
+const ONBOARDING_KEY = 'golden-investor-onboarding-done';
+
 export function App() {
   const [screen, setScreen] = useState<Screen>('status');
   const [helpOpen, setHelpOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+
+  // Онбординг: при первом заходе — открыть инструкцию
+  useEffect(() => {
+    const isOnboardingDone = localStorage.getItem(ONBOARDING_KEY) === '1';
+    if (!isOnboardingDone) {
+      setHelpOpen(true);
+    }
+  }, []);
+
+  // Закрытие модалки: помечаем онбординг как пройденный
+  const handleCloseHelp = () => {
+    setHelpOpen(false);
+    localStorage.setItem(ONBOARDING_KEY, '1');
+  };
 
   return (
     <div
@@ -123,7 +139,7 @@ export function App() {
       {/* ─── Модалка инструкции ────────────── */}
       <HelpModal
         open={helpOpen}
-        onClose={() => setHelpOpen(false)}
+        onClose={handleCloseHelp}
         initialSectionId={SCREEN_TO_HELP[screen]}
       />
     </div>

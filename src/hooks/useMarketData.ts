@@ -1,48 +1,84 @@
 // src/hooks/useMarketData.ts
 
-import { useEffect, useState } from 'react';
-import { loadMarketState, saveMarketState, isStale } from '../core/marketStore';
-import { fetchAllMarketData } from '../core/marketFetcher';
-import type { MarketState } from '../core/marketFetcher';
+import { useCallback, useEffect, useState } from 'react';
+import { DEFAULT_MARKET, type MarketState } from '../data/manualMarket';
 
+const STORAGE_KEY = 'golden-investor-market';
+
+/**
+ * Сколько дней данные считаются свежими.
+ * После — StatusScreen показывает баннер «Обновить данные».
+ */
+const FRESHNESS_DAYS = 14;
+
+/**
+ * Проверка: устарели ли данные.
+ */
+export function isStale(updatedAt: string): boolean {
+  const updated = new Date(updatedAt).getTime();
+  const now = Date.now();
+  const days = (now - updated) / (1000 * 60 * 60 * 24);
+  return days > FRESHNESS_DAYS;
+}
+
+/**
+ * Сколько дней прошло с момента обновления.
+ */
+export function daysSinceUpdate(updatedAt: string): number {
+  const updated = new Date(updatedAt).getTime();
+  const now = Date.now();
+  return Math.floor((now - updated) / (1000 * 60 * 60 * 24));
+}
+
+function loadMarket(): MarketState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Проверка структуры
+      if (typeof parsed.keyRate === 'number' && typeof parsed.updatedAt === 'string') {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('useMarketData: ошибка чтения, используем DEFAULT_MARKET');
+  }
+  return DEFAULT_MARKET;
+}
+
+function saveMarket(state: MarketState): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/**
+ * Хук для чтения/записи рыночных данных.
+ * Автоматически сохраняет в localStorage при обновлении.
+ */
 export function useMarketData() {
-  const [state, setState] = useState<MarketState | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [market, setMarketState] = useState<MarketState>(loadMarket);
 
+  // Сохранение при любом изменении
   useEffect(() => {
-    (async () => {
-      // 1. Сначала показываем из кэша (мгновенно)
-      const cached = await loadMarketState();
-      if (cached) setState(cached);
-      setLoading(false);
+    saveMarket(market);
+  }, [market]);
 
-      // 2. Проверяем: данные устарели?
-      const stale = await isStale(cached);
-      
-      if (stale || !cached) {
-        // 3. Устарели — просим Service Worker обновить
-        if (navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage('UPDATE_MARKET_DATA');
-        } else {
-          // SW ещё не готов — обновляем напрямую
-          const fresh = await fetchAllMarketData();
-          await saveMarketState(fresh);
-          setState(fresh);
-        }
-      }
-    })();
-
-    // 4. Слушаем сообщение от SW «данные обновлены»
-    const handler = (event: MessageEvent) => {
-      if (event.data === 'DATA_UPDATED') {
-        loadMarketState().then((fresh) => {
-          if (fresh) setState(fresh);
-        });
-      }
-    };
-    navigator.serviceWorker?.addEventListener('message', handler);
-    return () => navigator.serviceWorker?.removeEventListener('message', handler);
+  const updateMarket = useCallback((patch: Partial<MarketState>) => {
+    setMarketState((prev) => ({
+      ...prev,
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    }));
   }, []);
 
-  return { state, loading };
+  const resetToDefault = useCallback(() => {
+    setMarketState({ ...DEFAULT_MARKET, updatedAt: new Date().toISOString() });
+  }, []);
+
+  return {
+    market,
+    updateMarket,
+    resetToDefault,
+    isStale: isStale(market.updatedAt),
+    daysSince: daysSinceUpdate(market.updatedAt),
+  };
 }
