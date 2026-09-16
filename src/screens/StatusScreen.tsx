@@ -5,7 +5,9 @@ import { deriveStatus } from '../core/truthEngine';
 import { useDecisionLog } from '../hooks/useDecisionLog';
 import { useMarketData } from '../hooks/useMarketData';
 import { BanksTable } from '../components/BanksTable';
+import { getOracleAdvice } from '../core/oracle';
 import type { MarketState } from '../data/manualMarket';
+import type { PlanRow } from '../types/market';
 
 export function StatusScreen() {
   const { market, updateMarket, resetToDefault, isStale, daysSince } = useMarketData();
@@ -14,6 +16,16 @@ export function StatusScreen() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [draft, setDraft] = useState<MarketState>(market);
+
+  // Читаем план из localStorage (для оракула)
+  const [plan] = useState<PlanRow[]>(() => {
+    try {
+      const raw = localStorage.getItem('gi_plan_map_v1');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Записываем текущий статус в историю (один раз в день)
   useEffect(() => {
@@ -47,6 +59,16 @@ export function StatusScreen() {
       setEditOpen(false);
     }
   };
+
+  // Оракул
+  const advice = getOracleAdvice(market, plan);
+
+  const levelColors: Record<string, { bg: string; border: string; color: string }> = {
+    act: { bg: 'rgba(34,197,94,0.08)', border: 'var(--success)', color: 'var(--success)' },
+    wait: { bg: 'rgba(234,179,8,0.08)', border: 'var(--warning)', color: 'var(--warning)' },
+    danger: { bg: 'rgba(239,68,68,0.08)', border: 'var(--danger)', color: 'var(--danger)' },
+  };
+  const advColor = levelColors[advice.level];
 
   return (
     <div className="status-screen" style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
@@ -116,36 +138,12 @@ export function StatusScreen() {
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <Field
-              label="Ключевая ставка, %"
-              value={draft.keyRate}
-              onChange={(v) => setDraft({ ...draft, keyRate: v })}
-            />
-            <Field
-              label="Инфляция, %"
-              value={draft.inflation}
-              onChange={(v) => setDraft({ ...draft, inflation: v })}
-            />
-            <Field
-              label="10-летние ОФЗ, %"
-              value={draft.ofz10y}
-              onChange={(v) => setDraft({ ...draft, ofz10y: v })}
-            />
-            <Field
-              label="Короткие ОФЗ, %"
-              value={draft.ofzShort}
-              onChange={(v) => setDraft({ ...draft, ofzShort: v })}
-            />
-            <Field
-              label="Средняя ставка по вкладам, %"
-              value={draft.depositRate}
-              onChange={(v) => setDraft({ ...draft, depositRate: v })}
-            />
-            <Field
-              label="Золото, руб/грамм"
-              value={draft.goldPrice}
-              onChange={(v) => setDraft({ ...draft, goldPrice: v })}
-            />
+            <Field label="Ключевая ставка, %" value={draft.keyRate} onChange={(v) => setDraft({ ...draft, keyRate: v })} />
+            <Field label="Инфляция, %" value={draft.inflation} onChange={(v) => setDraft({ ...draft, inflation: v })} />
+            <Field label="10-летние ОФЗ, %" value={draft.ofz10y} onChange={(v) => setDraft({ ...draft, ofz10y: v })} />
+            <Field label="Короткие ОФЗ, %" value={draft.ofzShort} onChange={(v) => setDraft({ ...draft, ofzShort: v })} />
+            <Field label="Средняя ставка по вкладам, %" value={draft.depositRate} onChange={(v) => setDraft({ ...draft, depositRate: v })} />
+            <Field label="Золото, руб/грамм" value={draft.goldPrice} onChange={(v) => setDraft({ ...draft, goldPrice: v })} />
             <div>
               <label style={{ fontSize: 12, color: 'var(--subtext)', display: 'block', marginBottom: 4 }}>
                 Следующее заседание ЦБ
@@ -170,31 +168,13 @@ export function StatusScreen() {
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
             <button
               onClick={handleSave}
-              style={{
-                flex: 1,
-                padding: '0.6rem',
-                background: 'var(--primary)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontWeight: 600,
-              }}
+              style={{ flex: 1, padding: '0.6rem', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
             >
               ✓ Сохранить
             </button>
             <button
               onClick={() => setEditOpen(false)}
-              style={{
-                flex: 1,
-                padding: '0.6rem',
-                background: 'transparent',
-                color: 'var(--text)',
-                border: '1px solid var(--border)',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontWeight: 500,
-              }}
+              style={{ flex: 1, padding: '0.6rem', background: 'transparent', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontWeight: 500 }}
             >
               Отмена
             </button>
@@ -202,15 +182,7 @@ export function StatusScreen() {
 
           <button
             onClick={handleReset}
-            style={{
-              marginTop: 12,
-              background: 'none',
-              border: 'none',
-              color: 'var(--subtext-muted)',
-              fontSize: 12,
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
+            style={{ marginTop: 12, background: 'none', border: 'none', color: 'var(--subtext-muted)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}
           >
             Вернуть стандартные значения
           </button>
@@ -231,6 +203,89 @@ export function StatusScreen() {
         }}
       >
         {cfg.text}
+      </div>
+
+      {/* ОРАКУЛ — совет месяца */}
+      <div
+        style={{
+          marginTop: '1.5rem',
+          padding: '1.25rem',
+          background: advColor.bg,
+          border: `2px solid ${advColor.border}`,
+          borderRadius: 12,
+          color: 'var(--text)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 8,
+            fontSize: 12,
+            color: advColor.color,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            fontWeight: 700,
+          }}
+        >
+          <span>{advice.icon}</span>
+          <span>{advice.title}</span>
+        </div>
+        <div
+          style={{
+            fontSize: 16,
+            fontWeight: 700,
+            color: 'var(--heading)',
+            marginBottom: 12,
+            lineHeight: 1.4,
+          }}
+        >
+          {advice.headline}
+        </div>
+
+        <ul
+          style={{
+            margin: 0,
+            paddingLeft: 20,
+            fontSize: 13,
+            color: 'var(--text-soft)',
+            lineHeight: 1.7,
+          }}
+        >
+          {advice.reasoning.map((r, i) => (
+            <li key={i} style={{ marginBottom: 4 }}>{r}</li>
+          ))}
+        </ul>
+
+        {advice.action && (
+          <div
+            style={{
+              marginTop: 12,
+              paddingTop: 12,
+              borderTop: '1px solid var(--border)',
+              fontSize: 13,
+              color: advColor.color,
+              fontWeight: 600,
+            }}
+          >
+            🎯 {advice.action}
+          </div>
+        )}
+
+        {advice.warning && (
+          <div
+            style={{
+              marginTop: 8,
+              fontSize: 12,
+              color: 'var(--subtext)',
+              fontStyle: 'italic',
+              lineHeight: 1.6,
+            }}
+          >
+            ⚠️ {advice.warning}
+          </div>
+        )}
       </div>
 
       {/* Метрики ЦБ */}
@@ -263,24 +318,6 @@ export function StatusScreen() {
 
       {/* ТАБЛИЦА БАНКОВ */}
       <BanksTable />
-
-      {/* Рекомендация */}
-      <div
-        style={{
-          marginTop: '2rem',
-          padding: '1rem',
-          background: 'var(--card-bg-soft)',
-          borderRadius: 12,
-          color: 'var(--text)',
-        }}
-      >
-        <p><strong>Рекомендация:</strong></p>
-        <p>
-          {status === 'do-nothing' && 'Дождись решения ЦБ. Сегодня ничего не делай. Приходи завтра.'}
-          {status === 'wait' && 'Условия неполные. Продолжай наблюдать. Следующий сигнал — заседание ЦБ.'}
-          {status === 'act' && 'Окно возможностей открыто. Проверь свой план и действуй по карте.'}
-        </p>
-      </div>
 
       {/* История статусов */}
       <div
