@@ -6,16 +6,18 @@ import { StatusScreen } from './screens/StatusScreen';
 import { ActionScreen } from './screens/ActionScreen';
 import { MapScreen } from './screens/MapScreen';
 import { DecisionLogScreen } from './screens/DecisionLogScreen';
+import { GoalScreen } from './screens/GoalScreen';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal } from './components/HelpModal';
 import { useTheme } from './hooks/useTheme';
 
-type Screen = 'status' | 'action' | 'map' | 'log';
+type Screen = 'status' | 'action' | 'goal' | 'map' | 'log';
 
 // Соответствие экранов и разделов инструкции
 const SCREEN_TO_HELP: Record<Screen, string> = {
   status: 'status',
   action: 'action',
+  goal: 'general',
   map: 'map',
   log: 'log',
 };
@@ -24,6 +26,7 @@ const SCREEN_TO_HELP: Record<Screen, string> = {
 const NAV_ITEMS: { id: Screen; icon: string; label: string }[] = [
   { id: 'status', icon: '📍', label: 'Где я' },
   { id: 'action', icon: '⚡', label: 'Действие' },
+  { id: 'goal', icon: '🎯', label: 'Цель' },
   { id: 'map', icon: '🗺', label: 'Карта' },
   { id: 'log', icon: '📖', label: 'Дневник' },
 ];
@@ -63,7 +66,7 @@ export function App() {
       <nav
         style={{
           display: 'flex',
-          gap: '0.5rem',
+          gap: '0.4rem',
           padding: '0.75rem 1rem',
           background: 'var(--primary-dark)',
           position: 'sticky',
@@ -81,23 +84,23 @@ export function App() {
               onClick={() => setScreen(item.id)}
               style={{
                 flex: 1,
-                padding: '0.65rem 0.5rem',
+                padding: '0.6rem 0.4rem',
                 background: isActive ? 'rgba(255,255,255,0.12)' : 'transparent',
                 color: '#f1f5f9',
                 border: isActive ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
                 borderRadius: 8,
                 cursor: 'pointer',
-                fontSize: '0.85rem',
+                fontSize: '0.8rem',
                 fontWeight: isActive ? 600 : 500,
                 transition: 'background 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 6,
+                gap: 4,
                 whiteSpace: 'nowrap',
               }}
             >
-              <span style={{ fontSize: 15 }}>{item.icon}</span>
+              <span style={{ fontSize: 14 }}>{item.icon}</span>
               <span>{item.label}</span>
             </button>
           );
@@ -109,7 +112,7 @@ export function App() {
           aria-label={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
           title={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
           style={{
-            padding: '0.5rem 0.65rem',
+            padding: '0.5rem 0.6rem',
             background: 'rgba(255,255,255,0.08)',
             color: '#f1f5f9',
             border: '1px solid rgba(255,255,255,0.15)',
@@ -132,6 +135,7 @@ export function App() {
       <main style={{ padding: '1rem', maxWidth: 900, margin: '0 auto' }}>
         {screen === 'status' && <StatusScreen />}
         {screen === 'action' && <ActionScreen />}
+        {screen === 'goal' && <GoalScreen />}
         {screen === 'map' && <MapScreen />}
         {screen === 'log' && <DecisionLogScreen />}
       </main>
