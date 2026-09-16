@@ -1,9 +1,12 @@
 // src/core/decisionLog.ts
 
-import type { DecisionEntry, StatusHistoryEntry } from '../types/market';
+import type { DecisionEntry, StatusHistoryEntry, OutcomeType } from '../types/market';
 
 const LOG_KEY = 'gi_decision_log_v1';
 const HISTORY_KEY = 'gi_status_history_v1';
+
+/** Через сколько дней проверять решение. */
+const CHECK_AFTER_DAYS = 30;
 
 /* ─── Дневник решений ────────────────────── */
 
@@ -18,12 +21,88 @@ export function loadDecisions(): DecisionEntry[] {
 
 export function saveDecision(entry: DecisionEntry): void {
   const log = loadDecisions();
-  log.push(entry);
+  // Автоматически проставляем checkDate
+  const withCheckDate: DecisionEntry = {
+    ...entry,
+    checkDate: entry.checkDate || addDays(entry.date, CHECK_AFTER_DAYS),
+  };
+  log.push(withCheckDate);
   localStorage.setItem(LOG_KEY, JSON.stringify(log));
+}
+
+/**
+ * Обновляет существующее решение (например, ставит outcome).
+ */
+export function updateDecision(id: string, patch: Partial<DecisionEntry>): void {
+  const log = loadDecisions();
+  const updated = log.map((d) => (d.id === id ? { ...d, ...patch } : d));
+  localStorage.setItem(LOG_KEY, JSON.stringify(updated));
 }
 
 export function clearDecisions(): void {
   localStorage.removeItem(LOG_KEY);
+}
+
+/* ─── Проверка исходов (Фича 4) ──────────── */
+
+/**
+ * Возвращает решения, у которых checkDate уже прошёл,
+ * но outcome ещё не проставлен.
+ */
+export function getPendingOutcomes(decisions: DecisionEntry[]): DecisionEntry[] {
+  const now = Date.now();
+  return decisions
+    .filter((d) => {
+      if (d.outcome) return false;           // Уже проверено
+      if (!d.checkDate) return false;        // Нет даты проверки
+      return new Date(d.checkDate).getTime() <= now;
+    })
+    .sort((a, b) => new Date(a.checkDate!).getTime() - new Date(b.checkDate!).getTime());
+}
+
+/**
+ * Проставляет outcome и checkedAt.
+ */
+export function recordOutcome(id: string, outcome: OutcomeType, note?: string): void {
+  updateDecision(id, {
+    outcome,
+    checkedAt: new Date().toISOString(),
+    outcomeNote: note,
+  });
+}
+
+/**
+ * Статистика по проверенным решениям.
+ */
+export interface OutcomeStats {
+  checked: number;        // Всего проверено
+  win: number;
+  loss: number;
+  unclear: number;
+  winRate: number;        // 0..100, win / (win + loss)
+  pending: number;        // Ждут проверки
+}
+
+export function analyzeOutcomes(decisions: DecisionEntry[]): OutcomeStats {
+  const checked = decisions.filter((d) => d.outcome);
+  const win = checked.filter((d) => d.outcome === 'win').length;
+  const loss = checked.filter((d) => d.outcome === 'loss').length;
+  const unclear = checked.filter((d) => d.outcome === 'unclear').length;
+
+  const decided = win + loss;
+  const winRate = decided > 0 ? Math.round((win / decided) * 100) : 0;
+
+  const pending = getPendingOutcomes(decisions).length;
+
+  return { checked: checked.length, win, loss, unclear, winRate, pending };
+}
+
+/* ─── Утилиты ────────────────────────────── */
+
+function addDays(isoDate: string, days: number): string {
+  const d = new Date(isoDate);
+  d.setDate(d.getDate() + days);
+  return d.toISOString();
 }
 
 /* ─── История статусов ───────────────────── */
@@ -42,7 +121,6 @@ export function pushStatus(status: StatusHistoryEntry['status']): void {
   const today = new Date().toISOString().slice(0, 10);
   const last = history[history.length - 1];
 
-  // Если сегодня уже записан — не дублируем
   if (last && last.date.slice(0, 10) === today) {
     if (last.status !== status) {
       history[history.length - 1] = { date: new Date().toISOString(), status };
@@ -55,9 +133,6 @@ export function pushStatus(status: StatusHistoryEntry['status']): void {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
 
-/**
- * Находит статус «месяц назад» — ближайшую запись ~30 дней назад.
- */
 export function getStatusMonthAgo(): StatusHistoryEntry | null {
   const history = loadStatusHistory();
   if (history.length === 0) return null;
@@ -86,7 +161,7 @@ export interface DecisionStats {
   impulsive: number;
   byInstrument: Record<string, number>;
   byActionType: Record<string, number>;
-  disciplineScore: number;  // 0–100
+  disciplineScore: number;
   firstDecisionDate: string | null;
   lastDecisionDate: string | null;
 }
@@ -144,8 +219,8 @@ export function filterDecisions(
 /* ─── Группировка по месяцам ─────────────── */
 
 export interface MonthlyGroup {
-  month: string;      // "Сентябрь 2026"
-  key: string;        // "2026-09"
+  month: string;
+  key: string;
   decisions: DecisionEntry[];
 }
 
@@ -183,9 +258,11 @@ export function groupByMonth(decisions: DecisionEntry[]): MonthlyGroup[] {
 export function exportDecisions(): void {
   const decisions = loadDecisions();
   const stats = analyzeDecisions(decisions);
+  const outcomes = analyzeOutcomes(decisions);
   const payload = {
     exportedAt: new Date().toISOString(),
     stats,
+    outcomes,
     decisions,
   };
 

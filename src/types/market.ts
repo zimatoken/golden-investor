@@ -37,6 +37,11 @@ export interface InstrumentOption {
   subtitle: string;
 }
 
+/**
+ * Результат проверки решения через 30 дней.
+ */
+export type OutcomeType = 'win' | 'loss' | 'unclear';
+
 export interface DecisionEntry {
   id: string;
   date: string;          // ISO
@@ -50,6 +55,12 @@ export interface DecisionEntry {
     inflation: number;
     status: 'act' | 'wait' | 'do-nothing';
   };
+
+  // ─── НОВЫЕ ПОЛЯ (Фича 4) ──────────────────────
+  checkDate?: string;        // Когда проверять (date + 30 дней)
+  outcome?: OutcomeType;     // Результат проверки
+  checkedAt?: string;        // Когда пользователь ответил (ISO)
+  outcomeNote?: string;      // Комментарий пользователя (опционально)
 }
 
 export interface StatusHistoryEntry {

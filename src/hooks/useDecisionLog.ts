@@ -25,6 +25,14 @@ export function useDecisionLog() {
     setDecisions([]);
   }, []);
 
+  /**
+   * Перечитать дневник из localStorage.
+   * Нужно после `recordOutcome` (Фича 4 — проверка исходов).
+   */
+  const refresh = useCallback(() => {
+    setDecisions(loadDecisions());
+  }, []);
+
   const recordStatus = useCallback((status: StatusHistoryEntry['status']) => {
     pushStatus(status);
     setHistory(loadStatusHistory());
@@ -37,6 +45,7 @@ export function useDecisionLog() {
     history,
     add,
     clear,
+    refresh,
     recordStatus,
     monthAgo,
   };

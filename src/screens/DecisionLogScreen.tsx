@@ -5,6 +5,8 @@ import { Download, Trash2, Filter } from 'lucide-react';
 import { useDecisionLog } from '../hooks/useDecisionLog';
 import {
   analyzeDecisions,
+  analyzeOutcomes,
+  getPendingOutcomes,
   filterDecisions,
   groupByMonth,
   exportDecisions,
@@ -12,12 +14,15 @@ import {
 } from '../core/decisionLog';
 import { DecisionCard } from '../components/DecisionCard';
 import { DecisionStats } from '../components/DecisionStats';
+import { OutcomeCheck } from '../components/OutcomeCheck';
 
 export function DecisionLogScreen() {
-  const { decisions, clear } = useDecisionLog();
+  const { decisions, clear, refresh } = useDecisionLog();
   const [filter, setFilter] = useState<DecisionFilter>('all');
 
   const stats = useMemo(() => analyzeDecisions(decisions), [decisions]);
+  const outcomes = useMemo(() => analyzeOutcomes(decisions), [decisions]);
+  const pending = useMemo(() => getPendingOutcomes(decisions), [decisions]);
   const filtered = useMemo(() => filterDecisions(decisions, filter), [decisions, filter]);
   const grouped = useMemo(() => groupByMonth(filtered), [filtered]);
 
@@ -93,14 +98,66 @@ export function DecisionLogScreen() {
           <div style={{ fontSize: 48, marginBottom: 12 }}>📖</div>
           <h3 style={{ margin: 0, color: 'var(--heading)' }}>Дневник пока пуст</h3>
           <p style={{ color: 'var(--subtext-muted)', marginTop: 8, maxWidth: 400, margin: '8px auto 0' }}>
-            Каждое решение на экране «Действие» попадёт сюда автоматически. Начни с малого — попробуй
-            выбрать инструмент и подтвердить действие.
+            Каждое решение на экране «Действие» попадёт сюда автоматически. Начни с малого.
           </p>
         </div>
       )}
 
+      {/* 🔔 БЛОК «ПОРА ПРОВЕРИТЬ» */}
+      {pending.length > 0 && (
+        <OutcomeCheck pending={pending} onRecorded={refresh} />
+      )}
+
       {/* Статистика */}
       {decisions.length > 0 && <DecisionStats stats={stats} />}
+
+      {/* Метрика исходов */}
+      {outcomes.checked > 0 && (
+        <div
+          style={{
+            marginBottom: 20,
+            padding: '1rem 1.25rem',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 12,
+              color: 'var(--subtext)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              marginBottom: 8,
+            }}
+          >
+            🎯 Исходы решений
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+              gap: 12,
+            }}
+          >
+            <StatCell label="Проверено" value={outcomes.checked} color="var(--text)" />
+            <StatCell label="🟢 Сработало" value={outcomes.win} color="var(--success)" />
+            <StatCell label="🔴 Не сработало" value={outcomes.loss} color="var(--danger)" />
+            <StatCell label="⚪ Неясно" value={outcomes.unclear} color="var(--subtext)" />
+            <StatCell
+              label="Win Rate"
+              value={`${outcomes.winRate}%`}
+              color={
+                outcomes.winRate >= 60
+                  ? 'var(--success)'
+                  : outcomes.winRate >= 40
+                  ? 'var(--warning)'
+                  : 'var(--danger)'
+              }
+            />
+          </div>
+        </div>
+      )}
 
       {/* Фильтры */}
       {decisions.length > 0 && (
@@ -154,12 +211,30 @@ export function DecisionLogScreen() {
         </div>
       ))}
 
-      {/* Если фильтр дал пустой результат */}
       {decisions.length > 0 && filtered.length === 0 && (
         <div style={{ textAlign: 'center', color: 'var(--subtext-muted)', padding: '2rem' }}>
           В этой категории пока нет записей.
         </div>
       )}
+    </div>
+  );
+}
+
+function StatCell({ label, value, color }: { label: string; value: number | string; color: string }) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <div
+        style={{
+          fontSize: 10,
+          color: 'var(--subtext)',
+          marginBottom: 4,
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ fontSize: 18, fontWeight: 700, color }}>{value}</div>
     </div>
   );
 }
