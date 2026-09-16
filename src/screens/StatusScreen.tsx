@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { deriveStatus } from '../core/truthEngine';
 import { useDecisionLog } from '../hooks/useDecisionLog';
 import { useMarketData } from '../hooks/useMarketData';
+import { BanksTable } from '../components/BanksTable';
 import type { MarketState } from '../data/manualMarket';
 
 export function StatusScreen() {
@@ -48,7 +49,7 @@ export function StatusScreen() {
   };
 
   return (
-    <div className="status-screen" style={{ padding: '2rem', maxWidth: 600, margin: '0 auto' }}>
+    <div className="status-screen" style={{ padding: '2rem', maxWidth: 700, margin: '0 auto' }}>
       {/* Баннер устаревших данных */}
       {isStale && !editOpen && (
         <div
@@ -87,7 +88,7 @@ export function StatusScreen() {
         </div>
       )}
 
-      {/* Форма редактирования */}
+      {/* Форма редактирования ЦБ */}
       {editOpen && (
         <div
           style={{
@@ -232,7 +233,7 @@ export function StatusScreen() {
         {cfg.text}
       </div>
 
-      {/* Метрики */}
+      {/* Метрики ЦБ */}
       <div style={{ marginTop: '2rem', fontSize: '1.1rem', lineHeight: 1.8, color: 'var(--text)' }}>
         <p><strong>Ключевая ставка:</strong> {market.keyRate}%</p>
         <p><strong>Инфляция:</strong> {market.inflation}%</p>
@@ -241,7 +242,7 @@ export function StatusScreen() {
         <p><strong>Средняя ставка по вкладам:</strong> {market.depositRate}%</p>
       </div>
 
-      {/* Кнопка обновления (если данные свежие) */}
+      {/* Кнопка обновления ЦБ (если данные свежие) */}
       {!editOpen && !isStale && (
         <button
           onClick={() => setEditOpen(true)}
@@ -256,9 +257,12 @@ export function StatusScreen() {
             fontSize: 12,
           }}
         >
-          ✏️ Обновить данные вручную
+          ✏️ Обновить данные ЦБ вручную
         </button>
       )}
+
+      {/* ТАБЛИЦА БАНКОВ */}
+      <BanksTable />
 
       {/* Рекомендация */}
       <div
