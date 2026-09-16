@@ -1,11 +1,15 @@
 // src/screens/StatusScreen.tsx
 
 import { useEffect, useState } from 'react';
+import { BookOpen } from 'lucide-react';
 import { deriveStatus } from '../core/truthEngine';
 import { useDecisionLog } from '../hooks/useDecisionLog';
 import { useMarketData } from '../hooks/useMarketData';
 import { BanksTable } from '../components/BanksTable';
 import { EventsCalendar } from '../components/EventsCalendar';
+import { SourcesModal } from '../components/SourcesModal';
+import { SourceLink } from '../components/SourceLink';
+import { MARKET_SOURCES } from '../data/sources';
 import { getOracleAdvice } from '../core/oracle';
 import type { MarketState } from '../data/manualMarket';
 import type { PlanRow } from '../types/market';
@@ -16,9 +20,9 @@ export function StatusScreen() {
   const { monthAgo, recordStatus } = useDecisionLog();
 
   const [editOpen, setEditOpen] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [draft, setDraft] = useState<MarketState>(market);
 
-  // Читаем план из localStorage (для оракула)
   const [plan] = useState<PlanRow[]>(() => {
     try {
       const raw = localStorage.getItem('gi_plan_map_v1');
@@ -28,12 +32,10 @@ export function StatusScreen() {
     }
   });
 
-  // Записываем текущий статус в историю (один раз в день)
   useEffect(() => {
     recordStatus(status);
   }, [status, recordStatus]);
 
-  // При открытии формы — сбросить draft на актуальный market
   useEffect(() => {
     if (editOpen) setDraft(market);
   }, [editOpen, market]);
@@ -61,7 +63,6 @@ export function StatusScreen() {
     }
   };
 
-  // Оракул
   const advice = getOracleAdvice(market, plan);
 
   const levelColors: Record<string, { bg: string; border: string; color: string }> = {
@@ -123,32 +124,77 @@ export function StatusScreen() {
             color: 'var(--text)',
           }}
         >
-          <h3 style={{ margin: '0 0 0.75rem', color: 'var(--heading)', fontSize: 16 }}>
-            📝 Обновить данные ЦБ
-          </h3>
-          <p style={{ fontSize: 12, color: 'var(--subtext)', marginBottom: 12 }}>
-            Возьми актуальные значения с{' '}
-            <a
-              href="https://www.cbr.ru/"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: 'var(--primary)' }}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+            <h3 style={{ margin: 0, color: 'var(--heading)', fontSize: 16 }}>
+              📝 Обновить данные ЦБ
+            </h3>
+            <button
+              onClick={() => setSourcesOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '0.35rem 0.7rem',
+                background: 'transparent',
+                color: 'var(--primary)',
+                border: '1px solid var(--primary)',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
             >
-              cbr.ru
-            </a>
+              <BookOpen size={14} /> Все источники
+            </button>
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--subtext)', marginBottom: 12 }}>
+            Нажми 🔗 рядом с полем — откроется официальный источник. Возьми цифру, впиши сюда.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <Field label="Ключевая ставка, %" value={draft.keyRate} onChange={(v) => setDraft({ ...draft, keyRate: v })} />
-            <Field label="Инфляция, %" value={draft.inflation} onChange={(v) => setDraft({ ...draft, inflation: v })} />
-            <Field label="10-летние ОФЗ, %" value={draft.ofz10y} onChange={(v) => setDraft({ ...draft, ofz10y: v })} />
-            <Field label="Короткие ОФЗ, %" value={draft.ofzShort} onChange={(v) => setDraft({ ...draft, ofzShort: v })} />
-            <Field label="Средняя ставка по вкладам, %" value={draft.depositRate} onChange={(v) => setDraft({ ...draft, depositRate: v })} />
-            <Field label="Золото, руб/грамм" value={draft.goldPrice} onChange={(v) => setDraft({ ...draft, goldPrice: v })} />
+            <Field
+              label="Ключевая ставка, %"
+              value={draft.keyRate}
+              onChange={(v) => setDraft({ ...draft, keyRate: v })}
+              sourceUrl={MARKET_SOURCES.keyRate.url}
+            />
+            <Field
+              label="Инфляция, %"
+              value={draft.inflation}
+              onChange={(v) => setDraft({ ...draft, inflation: v })}
+              sourceUrl={MARKET_SOURCES.inflation.url}
+            />
+            <Field
+              label="10-летние ОФЗ, %"
+              value={draft.ofz10y}
+              onChange={(v) => setDraft({ ...draft, ofz10y: v })}
+              sourceUrl={MARKET_SOURCES.ofz10y.url}
+            />
+            <Field
+              label="Короткие ОФЗ, %"
+              value={draft.ofzShort}
+              onChange={(v) => setDraft({ ...draft, ofzShort: v })}
+              sourceUrl={MARKET_SOURCES.ofzShort.url}
+            />
+            <Field
+              label="Средняя ставка по вкладам, %"
+              value={draft.depositRate}
+              onChange={(v) => setDraft({ ...draft, depositRate: v })}
+              sourceUrl={MARKET_SOURCES.depositRate.url}
+            />
+            <Field
+              label="Золото, руб/грамм"
+              value={draft.goldPrice}
+              onChange={(v) => setDraft({ ...draft, goldPrice: v })}
+              sourceUrl={MARKET_SOURCES.goldPrice.url}
+            />
             <div>
-              <label style={{ fontSize: 12, color: 'var(--subtext)', display: 'block', marginBottom: 4 }}>
-                Следующее заседание ЦБ
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <label style={{ fontSize: 12, color: 'var(--subtext)' }}>
+                  Следующее заседание ЦБ
+                </label>
+                <SourceLink url={MARKET_SOURCES.nextCBDate.url} label="Календарь ЦБ" />
+              </div>
               <input
                 type="date"
                 value={draft.nextCBDate}
@@ -206,7 +252,7 @@ export function StatusScreen() {
         {cfg.text}
       </div>
 
-      {/* ОРАКУЛ — совет месяца */}
+      {/* ОРАКУЛ */}
       <div
         style={{
           marginTop: '1.5rem',
@@ -400,25 +446,31 @@ export function StatusScreen() {
       >
         Закрыть приложение
       </button>
+
+      {/* МОДАЛКА «ВСЕ ИСТОЧНИКИ» */}
+      <SourcesModal open={sourcesOpen} onClose={() => setSourcesOpen(false)} />
     </div>
   );
 }
 
-/* ─── Вспомогательный компонент поля ──────────── */
+/* ─── Поле с кнопкой «🔗 Источник» ─────────── */
 function Field({
   label,
   value,
   onChange,
+  sourceUrl,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
+  sourceUrl?: string;
 }) {
   return (
     <div>
-      <label style={{ fontSize: 12, color: 'var(--subtext)', display: 'block', marginBottom: 4 }}>
-        {label}
-      </label>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+        <label style={{ fontSize: 12, color: 'var(--subtext)' }}>{label}</label>
+        {sourceUrl && <SourceLink url={sourceUrl} label={`Источник: ${label}`} />}
+      </div>
       <input
         type="number"
         step="0.01"
