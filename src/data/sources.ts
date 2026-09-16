@@ -50,6 +50,9 @@ export const MARKET_SOURCES: Record<string, Source> = {
 
 /**
  * Ссылки на страницы вкладов банков.
+ * 
+ * Через поиск Яндекса — потому что прямые ссылки на банки
+ * часто выдают ошибку сертификата в Chrome (российские УЦ).
  */
 export const BANK_SOURCES: Record<string, Source> = {
   cbr: {
@@ -58,24 +61,24 @@ export const BANK_SOURCES: Record<string, Source> = {
     description: 'Официальный сайт',
   },
   sber: {
-    url: 'https://www.sberbank.ru/ru/person/contributions',
+    url: 'https://yandex.ru/search/?text=Сбербанк вклады физических лиц',
     label: 'Сбербанк — Вклады',
-    description: 'Актуальные ставки по вкладам',
+    description: 'Через Яндекс.Поиск',
   },
   alfa: {
-    url: 'https://alfabank.ru/make-money/deposits/',
+    url: 'https://yandex.ru/search/?text=Альфа-Банк вклады физических лиц',
     label: 'Альфа-Банк — Вклады',
-    description: 'Все вклады и накопительные счета',
+    description: 'Через Яндекс.Поиск',
   },
   tbank: {
-    url: 'https://www.tbank.ru/savings/deposit/',
+    url: 'https://yandex.ru/search/?text=Т-Банк вклады физических лиц',
     label: 'Т-Банк — Вклады',
-    description: 'Вклады и накопительные счета',
+    description: 'Через Яндекс.Поиск',
   },
   vtb: {
-    url: 'https://www.vtb.ru/person/vklady/',
+    url: 'https://yandex.ru/search/?text=ВТБ вклады физических лиц',
     label: 'ВТБ — Вклады',
-    description: 'Вклады для физических лиц',
+    description: 'Через Яндекс.Поиск',
   },
 };
 

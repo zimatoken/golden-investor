@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Edit2, Check, X } from 'lucide-react';
 import { loadBanks, saveBanks, type BankRate } from '../data/banks';
+import { SourceLink } from './SourceLink';
+import { BANK_SOURCES } from '../data/sources';
 
 interface Props {
   /** Колбэк: когда данные банков обновились. */
@@ -181,62 +183,69 @@ export function BanksTable({ onUpdate }: Props) {
             </tr>
           </thead>
           <tbody>
-            {display.map((bank, i) => (
-              <tr
-                key={bank.id}
-                style={{ borderBottom: '1px solid var(--border)' }}
-              >
-                <td style={tdStyle}>
-                  <span style={{ marginRight: 6 }}>{bank.icon}</span>
-                  <strong>{bank.name}</strong>
-                  {bank.note && !editing && (
-                    <div style={{ fontSize: 10, color: 'var(--subtext-muted)', marginTop: 2 }}>
-                      {bank.note}
+            {display.map((bank, i) => {
+              const source = BANK_SOURCES[bank.id];
+
+              return (
+                <tr
+                  key={bank.id}
+                  style={{ borderBottom: '1px solid var(--border)' }}
+                >
+                  <td style={tdStyle}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <span>{bank.icon}</span>
+                      <strong>{bank.name}</strong>
+                      {source && <SourceLink url={source.url} label={source.label} />}
                     </div>
-                  )}
-                </td>
-                <td style={tdStyle}>
-                  {editing ? (
-                    <EditCell
-                      value={bank.keyRate}
-                      onChange={(v) => updateField(i, 'keyRate', v)}
-                    />
-                  ) : (
-                    formatPct(bank.keyRate)
-                  )}
-                </td>
-                <td style={tdStyle}>
-                  {editing ? (
-                    <EditCell
-                      value={bank.ofz10y}
-                      onChange={(v) => updateField(i, 'ofz10y', v)}
-                    />
-                  ) : (
-                    formatPct(bank.ofz10y)
-                  )}
-                </td>
-                <td style={tdStyle}>
-                  {editing ? (
-                    <EditCell
-                      value={bank.gold}
-                      onChange={(v) => updateField(i, 'gold', v)}
-                    />
-                  ) : (
-                    bank.gold ? `${bank.gold.toLocaleString('ru-RU')} ₽` : '—'
-                  )}
-                </td>
-                <td style={tdStyle}>
-                  {editing ? (
-                    <EditCell
-                      value={bank.deposit}
-                      onChange={(v) => updateField(i, 'deposit', v)}
-                    />
-                  ) : (
-                    formatPct(bank.deposit)
-                  )}
-                </td>
-              </tr>
-            ))}
+                    {bank.note && !editing && (
+                      <div style={{ fontSize: 10, color: 'var(--subtext-muted)', marginTop: 2 }}>
+                        {bank.note}
+                      </div>
+                    )}
+                  </td>
+                  <td style={tdStyle}>
+                    {editing ? (
+                      <EditCell
+                        value={bank.keyRate}
+                        onChange={(v) => updateField(i, 'keyRate', v)}
+                      />
+                    ) : (
+                      formatPct(bank.keyRate)
+                    )}
+                  </td>
+                  <td style={tdStyle}>
+                    {editing ? (
+                      <EditCell
+                        value={bank.ofz10y}
+                        onChange={(v) => updateField(i, 'ofz10y', v)}
+                      />
+                    ) : (
+                      formatPct(bank.ofz10y)
+                    )}
+                  </td>
+                  <td style={tdStyle}>
+                    {editing ? (
+                      <EditCell
+                        value={bank.gold}
+                        onChange={(v) => updateField(i, 'gold', v)}
+                      />
+                    ) : (
+                      bank.gold ? `${bank.gold.toLocaleString('ru-RU')} ₽` : '—'
+                    )}
+                  </td>
+                  <td style={tdStyle}>
+                    {editing ? (
+                      <EditCell
+                        value={bank.deposit}
+                        onChange={(v) => updateField(i, 'deposit', v)}
+                      />
+                    ) : (
+                      formatPct(bank.deposit)
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -251,7 +260,7 @@ export function BanksTable({ onUpdate }: Props) {
             fontStyle: 'italic',
           }}
         >
-          💡 Возьми актуальные ставки с сайтов банков. Оставь пустым, если банк не предлагает инструмент.
+          💡 Нажми 🔗 рядом с банком — откроется страница вкладов. Возьми цифру, впиши.
         </div>
       )}
     </div>
