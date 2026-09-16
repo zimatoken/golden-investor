@@ -1,7 +1,7 @@
 // src/screens/DecisionLogScreen.tsx
 
 import { useMemo, useState } from 'react';
-import { Download, Trash2, Filter } from 'lucide-react';
+import { Download, Trash2, Filter, RefreshCw } from 'lucide-react';
 import { useDecisionLog } from '../hooks/useDecisionLog';
 import {
   analyzeDecisions,
@@ -15,10 +15,12 @@ import {
 import { DecisionCard } from '../components/DecisionCard';
 import { DecisionStats } from '../components/DecisionStats';
 import { OutcomeCheck } from '../components/OutcomeCheck';
+import { DataTransfer } from '../components/DataTransfer';
 
 export function DecisionLogScreen() {
   const { decisions, clear, refresh } = useDecisionLog();
   const [filter, setFilter] = useState<DecisionFilter>('all');
+  const [transferOpen, setTransferOpen] = useState(false);
 
   const stats = useMemo(() => analyzeDecisions(decisions), [decisions]);
   const outcomes = useMemo(() => analyzeOutcomes(decisions), [decisions]);
@@ -34,53 +36,74 @@ export function DecisionLogScreen() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: 800, margin: '0 auto', color: 'var(--text)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
         <div>
           <h2 style={{ margin: 0, color: 'var(--heading)' }}>📖 Дневник решений</h2>
           <p style={{ color: 'var(--subtext)', marginTop: 4 }}>
             Каждое действие записывается автоматически. Через год ты увидишь свой путь.
           </p>
         </div>
-        {decisions.length > 0 && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={exportDecisions}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '0.5rem 0.9rem',
-                background: 'var(--primary-dark)',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontSize: 13,
-              }}
-              title="Скачать JSON"
-            >
-              <Download size={14} /> Экспорт
-            </button>
-            <button
-              onClick={handleClear}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '0.5rem 0.9rem',
-                background: 'transparent',
-                color: 'var(--danger)',
-                border: '1px solid rgba(239,68,68,0.3)',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontSize: 13,
-              }}
-              title="Удалить всё"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setTransferOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '0.5rem 0.9rem',
+              background: 'var(--primary)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+            title="Экспорт / Импорт всех данных"
+          >
+            <RefreshCw size={14} /> Данные
+          </button>
+          {decisions.length > 0 && (
+            <>
+              <button
+                onClick={exportDecisions}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '0.5rem 0.9rem',
+                  background: 'var(--primary-dark)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+                title="Скачать JSON решений"
+              >
+                <Download size={14} /> Решения
+              </button>
+              <button
+                onClick={handleClear}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '0.5rem 0.9rem',
+                  background: 'transparent',
+                  color: 'var(--danger)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                }}
+                title="Удалить всё"
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Пустое состояние */}
@@ -103,7 +126,7 @@ export function DecisionLogScreen() {
         </div>
       )}
 
-      {/* 🔔 БЛОК «ПОРА ПРОВЕРИТЬ» */}
+      {/* Блок «Пора проверить» */}
       {pending.length > 0 && (
         <OutcomeCheck pending={pending} onRecorded={refresh} />
       )}
@@ -216,6 +239,13 @@ export function DecisionLogScreen() {
           В этой категории пока нет записей.
         </div>
       )}
+
+      {/* Модалка «Перенос данных» */}
+      <DataTransfer
+        open={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        onImported={refresh}
+      />
     </div>
   );
 }
