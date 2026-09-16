@@ -1,7 +1,7 @@
 // src/components/BanksTable.tsx
 
 import { useEffect, useState } from 'react';
-import { RefreshCw, Edit2, Check, X } from 'lucide-react';
+import { Edit2, Check, X } from 'lucide-react';
 import { loadBanks, saveBanks, type BankRate } from '../data/banks';
 
 interface Props {
