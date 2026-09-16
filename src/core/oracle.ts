@@ -53,8 +53,7 @@ export function getOracleAdvice(
   // Производные метрики
   const realDeposit = market.depositRate - market.inflation;      // реальная ставка вклада
   const realKeyRate = market.keyRate - market.inflation;          // реальная ключевая
-  const ofzSpread = market.ofz10y - market.depositRate;           // ОФЗ vs вклад
-  const goldVsInflation = market.goldPrice > 0 ? 0 : 0;           // placeholder (нет % по золоту)
+  const ofzSpread = market.ofz10y - market.depositRate;           // ОФЗ vs вклад      // placeholder (нет % по золоту)
 
   // Правило 1: Ставка ниже инфляции — деньги «горят»
   if (market.keyRate < market.inflation) {
