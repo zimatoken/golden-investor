@@ -5,6 +5,7 @@ import { deriveStatus } from '../core/truthEngine';
 import { useDecisionLog } from '../hooks/useDecisionLog';
 import { useMarketData } from '../hooks/useMarketData';
 import { BanksTable } from '../components/BanksTable';
+import { EventsCalendar } from '../components/EventsCalendar';
 import { getOracleAdvice } from '../core/oracle';
 import type { MarketState } from '../data/manualMarket';
 import type { PlanRow } from '../types/market';
@@ -287,6 +288,9 @@ export function StatusScreen() {
           </div>
         )}
       </div>
+
+      {/* КАЛЕНДАРЬ ИНВЕСТОРА */}
+      <EventsCalendar />
 
       {/* Метрики ЦБ */}
       <div style={{ marginTop: '2rem', fontSize: '1.1rem', lineHeight: 1.8, color: 'var(--text)' }}>
