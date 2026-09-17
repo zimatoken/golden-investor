@@ -7,6 +7,7 @@ import { INSTRUMENTS } from '../data/instruments';
 import { useDecisionLog } from '../hooks/useDecisionLog';
 import { runMonteCarlo, INSTRUMENT_PARAMS, formatMoney } from '../core/monteCarlo';
 import { MonteCarloChart } from '../components/MonteCarloChart';
+import { ActionGuide } from '../components/ActionGuide';
 import type { InstrumentType } from '../types/market';
 
 type Step = 'choose-instrument' | 'check-plan' | 'paused' | 'scenarios';
@@ -314,6 +315,9 @@ export function ActionScreen() {
             </div>
           </div>
         </div>
+
+        {/* ГАЙД ПО ПОКУПКЕ */}
+        <ActionGuide instrument={instrument} />
       </div>
     );
   }
