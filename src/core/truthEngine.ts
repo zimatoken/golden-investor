@@ -88,6 +88,16 @@ export function calculateTruthScenarios(
 export function deriveStatus(market: MarketState): 'act' | 'wait' | 'do-nothing' {
   const today = new Date().toISOString().slice(0, 10);
 
+/**
+ * Определяет статус: можно действовать или нет.
+ *
+ * ВАЖНО: это упрощённая логика. В PHASE 2 будет заменена на Market Regime
+ * (см. AUDIT_V4.md). Сейчас статус — это агрегат трёх условий:
+ *   1. День заседания ЦБ — не действуем.
+ *   2. Инфляция > 7% — не действуем.
+ *   3. Ставка 13%+ и инфляция < 6.5% — потенциальное окно.
+ */  
+
   // День заседания ЦБ — никогда не действуем
   if (today === market.nextCBDate) {
     return 'do-nothing';
