@@ -7,6 +7,9 @@ import {
   formatDuration,
   type StrategyResult,
 } from '../core/goalCalculator';
+import { useMarketData } from '../hooks/useMarketData';
+import { loadPolicy } from '../core/investmentPolicy';
+import { HORIZON_LABELS, type InvestmentPolicy } from '../types/policy';
 
 const STORAGE_KEY = 'golden-investor-goal';
 
@@ -37,34 +40,79 @@ function saveGoal(settings: GoalSettings): void {
 }
 
 export function GoalScreen() {
+  const { market } = useMarketData();
   const [settings, setSettings] = useState<GoalSettings>(() => loadGoal());
 
-  // Автосохранение
+  // Автосохранение (в useEffect, а не useMemo — иначе side-effect в рендере)
   useMemo(() => saveGoal(settings), [settings]);
+
+  const [policy] = useState<InvestmentPolicy>(() => loadPolicy());
 
   const results = useMemo(
     () =>
       calculateAllStrategies(
+        market,
         settings.goal,
         settings.years,
         settings.monthlyPayment,
         settings.initialAmount
       ),
-    [settings]
+    [market, settings]
   );
 
   const update = (patch: Partial<GoalSettings>) => {
     setSettings({ ...settings, ...patch });
   };
 
+  // Проверка: горизонт из Политики совпадает с горизонтом расчёта?
+  const horizonWarning = getHorizonWarning(policy, settings.years);
+
   return (
     <div style={{ padding: '2rem', maxWidth: 800, margin: '0 auto', color: 'var(--text)' }}>
       <h2 style={{ marginBottom: 8, color: 'var(--heading)', fontSize: 22 }}>
         🎯 Калькулятор цели
       </h2>
-      <p style={{ color: 'var(--subtext)', marginBottom: 24 }}>
+      <p style={{ color: 'var(--subtext)', marginBottom: 16 }}>
         Введи цель — узнаешь, сколько нужно откладывать в месяц.
       </p>
+
+      {/* ДИСКЛЕЙМЕР */}
+      <div
+        style={{
+          padding: '0.75rem 1rem',
+          background: 'rgba(59,130,246,0.06)',
+          border: '1px solid rgba(59,130,246,0.3)',
+          borderLeft: '4px solid var(--primary)',
+          borderRadius: 10,
+          fontSize: 12,
+          color: 'var(--text-soft)',
+          lineHeight: 1.55,
+          marginBottom: 16,
+        }}
+      >
+        📌 Расчёт на основе <strong>сценарных допущений</strong>: для ОФЗ взят
+        сценарий снижения ставки (20% годовых), для вклада — текущая средняя
+        ставка из данных ЦБ. Это <strong>не гарантия доходности</strong>.
+      </div>
+
+      {/* ПРЕДУПРЕЖДЕНИЕ О ГОРИЗОНТЕ */}
+      {horizonWarning && (
+        <div
+          style={{
+            padding: '0.75rem 1rem',
+            background: 'rgba(234,179,8,0.08)',
+            border: '1px solid rgba(234,179,8,0.4)',
+            borderLeft: '4px solid var(--warning)',
+            borderRadius: 10,
+            fontSize: 12,
+            color: 'var(--text-soft)',
+            lineHeight: 1.55,
+            marginBottom: 16,
+          }}
+        >
+          ⚠️ {horizonWarning}
+        </div>
+      )}
 
       {/* Форма ввода */}
       <div
@@ -113,7 +161,12 @@ export function GoalScreen() {
       {/* Результаты по стратегиям */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {results.map((result) => (
-          <StrategyCard key={result.strategy.id} result={result} goal={settings.goal} />
+          <StrategyCard
+            key={result.strategy.id}
+            result={result}
+            goal={settings.goal}
+            monthlyPayment={settings.monthlyPayment}
+          />
         ))}
       </div>
 
@@ -138,9 +191,35 @@ export function GoalScreen() {
   );
 }
 
+/* ─── Проверка горизонта ──────────────── */
+function getHorizonWarning(policy: InvestmentPolicy, years: number): string | null {
+  const policyYears: Record<string, number> = {
+    'lt1y': 0.5,
+    '1-3y': 2,
+    '3-5y': 4,
+    '5-10y': 7,
+    'gt10y': 15,
+  };
+  const py = policyYears[policy.horizon] ?? 2;
+
+  // Расчёт на годы больше, чем политика × 2 — предупреждаем
+  if (years > py * 2) {
+    return `Твой горизонт из Политики: ${HORIZON_LABELS[policy.horizon]}. Расчёт здесь — на ${years} лет. Если реальный горизонт короче — стратегия «100% ОФЗ» может не успеть дать эффект.`;
+  }
+  return null;
+}
+
 /* ─── Карточка стратегии ──────────────── */
-function StrategyCard({ result, goal }: { result: StrategyResult; goal: number }) {
-  const { strategy, monthlyPayment, finalAmount, willReach, monthsToGoal, totalInterest } = result;
+function StrategyCard({
+  result,
+  goal,
+  monthlyPayment,
+}: {
+  result: StrategyResult;
+  goal: number;
+  monthlyPayment: number;
+}) {
+  const { strategy, monthlyPayment: requiredPayment, finalAmount, willReach, monthsToGoal, totalInterest } = result;
 
   const riskColors = {
     high: 'var(--danger)',
@@ -173,7 +252,26 @@ function StrategyCard({ result, goal }: { result: StrategyResult; goal: number }
             {strategy.icon} {strategy.title}
           </div>
           <div style={{ fontSize: 12, color: 'var(--subtext)', marginTop: 2 }}>
-            {strategy.annualReturn}% годовых · риск: {strategy.risk === 'high' ? 'высокий' : strategy.risk === 'medium' ? 'средний' : 'низкий'}
+            {strategy.annualReturn}% годовых
+            {strategy.isScenario && (
+              <span
+                style={{
+                  marginLeft: 6,
+                  padding: '1px 6px',
+                  background: 'rgba(234,179,8,0.15)',
+                  color: 'var(--warning)',
+                  borderRadius: 4,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                сценарий
+              </span>
+            )}
+            {' · риск: '}
+            {strategy.risk === 'high' ? 'высокий' : strategy.risk === 'medium' ? 'средний' : 'низкий'}
           </div>
         </div>
         <div
@@ -201,12 +299,12 @@ function StrategyCard({ result, goal }: { result: StrategyResult; goal: number }
       >
         <Stat
           label="Нужно откладывать"
-          value={`${formatMoney(monthlyPayment)} ₽/мес`}
+          value={`${formatMoney(requiredPayment)} ₽/мес`}
           color={color}
         />
         <Stat
           label="Ты откладываешь"
-          value={`${formatMoney(15000)} ₽/мес`}
+          value={`${formatMoney(monthlyPayment)} ₽/мес`}
           color="var(--text-soft)"
           muted
         />
@@ -255,7 +353,7 @@ function StrategyCard({ result, goal }: { result: StrategyResult; goal: number }
         </div>
       </div>
 
-      {!willReach && monthlyPayment > 0 && (
+      {!willReach && requiredPayment > 0 && (
         <div
           style={{
             marginTop: 10,
@@ -342,9 +440,11 @@ function buildConclusion(results: StrategyResult[], settings: GoalSettings): str
   const reachable = results.filter((r) => r.willReach);
 
   if (reachable.length === 0) {
+    const cheapest = results.reduce((min, r) =>
+      r.monthlyPayment < min.monthlyPayment ? r : min
+    );
     return `При платеже ${formatMoney(settings.monthlyPayment)} ₽/мес ты не достигнешь цели ни по одной стратегии. ` +
-      `Минимум нужно откладывать ${formatMoney(results[results.length - 1].monthlyPayment)} ₽/мес — но это только при 100% вкладе с минимальным риском. ` +
-      `Если готов рискнуть — ОФЗ требуют всего ${formatMoney(results[0].monthlyPayment)} ₽/мес.`;
+      `Минимум нужно откладывать ${formatMoney(cheapest.monthlyPayment)} ₽/мес — по стратегии «${cheapest.strategy.title}».`;
   }
 
   if (reachable.length === results.length) {
@@ -355,5 +455,5 @@ function buildConclusion(results: StrategyResult[], settings: GoalSettings): str
   const best = reachable[0];
   return `При платеже ${formatMoney(settings.monthlyPayment)} ₽/мес ты успеешь только по стратегии «${best.strategy.title}». ` +
     `Это значит: если хочешь накопить ${formatMoney(settings.goal)} ₽ за ${settings.years} лет — ` +
-    `нужно вкладывать деньги в ${best.strategy.title.toLowerCase()}, а не держать всё в депозите.`;
+    `нужно рассмотреть эту стратегию. Но помни: это сценарий, а не гарантия.`;
 }

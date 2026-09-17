@@ -9,6 +9,11 @@ export interface Strategy {
   title: string;
   annualReturn: number;  // % годовых
   risk: 'high' | 'medium' | 'low';
+  /**
+   * true — если доходность взята как сценарное допущение (не факт).
+   * Отображается в UI как пометка «сценарий».
+   */
+  isScenario: boolean;
 }
 
 /**
@@ -25,40 +30,73 @@ export interface StrategyResult {
 }
 
 /**
- * Три стратегии накопления.
+ * Сценарная доходность для длинных ОФЗ.
+ *
+ * ВАЖНО: это НЕ прогноз. Это допущение: «если ставка ЦБ будет снижаться».
+ * В реальности ОФЗ могут дать и больше, и меньше.
+ */
+const OFZ_SCENARIO_RETURN = 20;
+
+/**
+ * Возвращает актуальные стратегии с учётом рыночных данных.
+ *
+ * @param market — должен содержать market.depositRate (текущая ставка вклада)
+ */
+export function getStrategies(market: { depositRate: number }): Strategy[] {
+  const deposit = market.depositRate;
+  const ofz = OFZ_SCENARIO_RETURN;
+  const mixed = (ofz + deposit) / 2;
+
+  return [
+    {
+      id: 'ofz',
+      icon: '🟢',
+      title: '100% ОФЗ',
+      annualReturn: ofz,
+      risk: 'high',
+      isScenario: true,
+    },
+    {
+      id: 'mixed',
+      icon: '🟡',
+      title: '50% ОФЗ + 50% вклад',
+      annualReturn: Math.round(mixed * 10) / 10,
+      risk: 'medium',
+      isScenario: true,
+    },
+    {
+      id: 'deposit',
+      icon: '🔴',
+      title: '100% вклад',
+      annualReturn: deposit,
+      risk: 'low',
+      isScenario: false,
+    },
+  ];
+}
+
+/**
+ * Legacy-константа. Оставлена для обратной совместимости с кодом,
+ * который ещё использует STRATEGIES напрямую.
+ *
+ * @deprecated — используй getStrategies(market).
  */
 export const STRATEGIES: Strategy[] = [
-  {
-    id: 'ofz',
-    icon: '🟢',
-    title: '100% ОФЗ',
-    annualReturn: 20,
-    risk: 'high',
-  },
-  {
-    id: 'mixed',
-    icon: '🟡',
-    title: '50% ОФЗ + 50% вклад',
-    annualReturn: 16,
-    risk: 'medium',
-  },
-  {
-    id: 'deposit',
-    icon: '🔴',
-    title: '100% вклад',
-    annualReturn: 12.5,
-    risk: 'low',
-  },
+  { id: 'ofz', icon: '🟢', title: '100% ОФЗ', annualReturn: 20, risk: 'high', isScenario: true },
+  { id: 'mixed', icon: '🟡', title: '50% ОФЗ + 50% вклад', annualReturn: 16, risk: 'medium', isScenario: true },
+  { id: 'deposit', icon: '🔴', title: '100% вклад', annualReturn: 12.5, risk: 'low', isScenario: false },
 ];
 
 /**
  * Сколько нужно откладывать в месяц, чтобы достичь цели.
- * 
- * Формула: PMT = (FV * r) / ((1 + r)^n - 1) / (1 + r)
+ *
+ * Формула: PMT = (FV * r) / ((1 + r)^n - 1)
  * где:
  * - FV — будущая стоимость (цель)
  * - r — месячная ставка
  * - n — количество месяцев
+ *
+ * Платежи — ordinary annuity (в конце каждого месяца).
  */
 export function calculateMonthlyPayment(
   goal: number,
@@ -70,19 +108,15 @@ export function calculateMonthlyPayment(
   const n = years * 12;
 
   if (r === 0) {
-    // Простой случай — без процентов
     return (goal - initialAmount) / n;
   }
 
-  // Учитываем начальную сумму
   const goalAfterInitial = goal - initialAmount * Math.pow(1 + r, n);
 
   if (goalAfterInitial <= 0) {
-    // Начальной суммы достаточно
     return 0;
   }
 
-  // Обратная формула аннуитета
   const pmt = (goalAfterInitial * r) / (Math.pow(1 + r, n) - 1);
 
   return pmt;
@@ -90,7 +124,7 @@ export function calculateMonthlyPayment(
 
 /**
  * Сколько накопится при текущем ежемесячном платеже.
- * 
+ *
  * Формула: FV = PMT * ((1 + r)^n - 1) / r + initial * (1 + r)^n
  */
 export function calculateFinalAmount(
@@ -113,15 +147,20 @@ export function calculateFinalAmount(
 }
 
 /**
- * Расчёт всех трёх стратегий.
+ * Расчёт всех стратегий.
+ *
+ * @param market — для актуальных ставок (depositRate)
  */
 export function calculateAllStrategies(
+  market: { depositRate: number },
   goal: number,
   years: number,
   monthlyPayment: number,
   initialAmount: number = 0
 ): StrategyResult[] {
-  return STRATEGIES.map((strategy) => {
+  const strategies = getStrategies(market);
+
+  return strategies.map((strategy) => {
     const requiredPayment = calculateMonthlyPayment(
       goal,
       strategy.annualReturn,
@@ -137,11 +176,7 @@ export function calculateAllStrategies(
     );
 
     const willReach = finalAmount >= goal;
-
-    // Сколько всего внесёшь
     const totalContributed = initialAmount + monthlyPayment * years * 12;
-
-    // Сколько накапает процентами
     const totalInterest = finalAmount - totalContributed;
 
     // Месяцев до цели при текущем платеже
@@ -150,7 +185,8 @@ export function calculateAllStrategies(
       let balance = initialAmount;
       const r = strategy.annualReturn / 100 / 12;
       let months = 0;
-      while (balance < goal && months < 1200) {
+      // Ограничение 30 лет — выше уже не «месяцев до цели», а «до скончания века»
+      while (balance < goal && months < 360) {
         balance = balance * (1 + r) + monthlyPayment;
         months++;
       }
@@ -182,6 +218,10 @@ export function formatMoney(amount: number): string {
  * Форматирование срока (месяцы → «X лет Y мес»).
  */
 export function formatDuration(months: number): string {
+  if (months >= 360) {
+    return 'более 30 лет';
+  }
+
   const years = Math.floor(months / 12);
   const remainingMonths = months % 12;
 
