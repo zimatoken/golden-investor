@@ -9,6 +9,7 @@ import { DecisionLogScreen } from './screens/DecisionLogScreen';
 import { GoalScreen } from './screens/GoalScreen';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal } from './components/HelpModal';
+import { BackupIndicator } from './components/BackupIndicator';
 import { NotificationBanner } from './components/NotificationBanner';
 import { useTheme } from './hooks/useTheme';
 import { useNotifications } from './hooks/useNotifications';
@@ -133,6 +134,7 @@ export function App() {
           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
         </button>
 
+        <BackupIndicator />
         <HelpButton onClick={() => setHelpOpen(true)} />
       </nav>
 

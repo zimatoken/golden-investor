@@ -1,5 +1,7 @@
 // src/core/dataTransfer.ts
 
+import { saveLastBackup } from './backupReminder';
+
 /**
  * Универсальный экспорт/импорт всех данных приложения.
  * 
@@ -23,9 +25,12 @@ const EXPORT_KEYS = [
   `${PREFIX}-onboarding-done`,
   `${PREFIX}-goal`,
   `${PREFIX}-events`,
+  `${PREFIX}-notifications-shown`,
   LOG_KEY,
   HISTORY_KEY,
   PLAN_KEY,
+  'gi_policy_v1',       // ← Policy (PHASE 3.1)
+  'gi_invalidation_v1', // ← Invalidation (PHASE 3.3)
 ];
 
 export interface DataSnapshot {
@@ -140,6 +145,9 @@ export function downloadAsFile(): void {
   a.download = exportFilename();
   a.click();
   URL.revokeObjectURL(url);
+
+  // Обновляем дату последнего бэкапа
+  saveLastBackup();
 }
 
 /**

@@ -20,6 +20,7 @@ import { DecisionAssessment } from '../components/DecisionAssessment';
 import { InvalidationAlert } from '../components/InvalidationAlert';
 import { InvalidationEditor } from '../components/InvalidationEditor';
 import { PocketMode } from '../components/PocketMode';
+import { BackupBanner } from '../components/BackupBanner';
 import { syncInvalidations, hasInvalidations } from '../core/invalidationEngine';
 import { loadPolicy, savePolicy, isPolicyConfigured } from '../core/investmentPolicy';
 import type { InvestmentPolicy } from '../types/policy';
@@ -164,6 +165,9 @@ export function StatusScreen() {
           </button>
         </div>
       )}
+
+      {/* БАННЕР БЭКАПА */}
+      {!editOpen && <BackupBanner />}
 
       {/* POCKET MODE — сводка за 30 секунд */}
       {!editOpen && <PocketMode market={market} />}
