@@ -16,6 +16,7 @@ import { MarketRegimeBadge } from '../components/MarketRegimeBadge';
 import { EventRiskBanner } from '../components/EventRiskBanner';
 import { PolicySummary } from '../components/PolicySummary';
 import { PolicyEditor } from '../components/PolicyEditor';
+import { DecisionAssessment } from '../components/DecisionAssessment';
 import { loadPolicy, savePolicy, isPolicyConfigured } from '../core/investmentPolicy';
 import type { InvestmentPolicy } from '../types/policy';
 import { MARKET_SOURCES } from '../data/sources';
@@ -168,6 +169,15 @@ export function StatusScreen() {
 
       {/* РЕЖИМ РЫНКА */}
       {!editOpen && <MarketRegimeBadge market={market} />}
+
+      {/* ОЦЕНКА СЦЕНАРИЯ (Decision Engine) */}
+      {!editOpen && (
+        <DecisionAssessment
+          market={market}
+          policy={policy}
+          policyConfigured={policyConfigured}
+        />
+      )}
 
       {/* КРИВАЯ ДОХОДНОСТИ ОФЗ */}
       {!editOpen && <YieldCurve points={market.yieldCurve} />}

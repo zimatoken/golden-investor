@@ -835,3 +835,135 @@ body {
     font-size: 12px;
   }
 }
+
+/* ─── Decision Assessment ───────────── */
+
+.decision-assessment {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.decision-supported { border-left-color: var(--success); }
+.decision-partial { border-left-color: var(--warning); }
+.decision-invalid { border-left-color: var(--danger); }
+.decision-wait { border-left-color: var(--subtext); }
+.decision-insufficient { border-left-color: var(--subtext-muted); }
+
+.decision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.decision-instrument {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--heading);
+}
+
+.decision-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--card-bg-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.decision-supported .decision-status { color: var(--success); background: rgba(34,197,94,0.1); }
+.decision-partial .decision-status { color: var(--warning); background: rgba(234,179,8,0.1); }
+.decision-invalid .decision-status { color: var(--danger); background: rgba(239,68,68,0.1); }
+.decision-wait .decision-status { color: var(--subtext); background: var(--card-bg-soft); }
+.decision-insufficient .decision-status { color: var(--subtext-muted); background: var(--card-bg-soft); }
+
+.decision-status-icon {
+  font-size: 14px;
+}
+
+.decision-block {
+  margin-bottom: 12px;
+}
+
+.decision-block-next {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.decision-block-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--subtext);
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.decision-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.decision-item {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-soft);
+  padding: 4px 0;
+}
+
+.decision-item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 7px;
+}
+
+.decision-item-positive .decision-item-dot { background: var(--success); }
+.decision-item-negative .decision-item-dot { background: var(--danger); }
+.decision-item-neutral .decision-item-dot { background: var(--subtext); }
+
+.decision-item-arrow {
+  color: var(--primary);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.decision-item-neutral .decision-item-arrow {
+  color: var(--primary);
+}
+
+.decision-disclaimer {
+  margin-top: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--subtext);
+  background: var(--card-bg-soft);
+  border-radius: 8px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .decision-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .decision-item {
+    font-size: 12px;
+  }
+}
