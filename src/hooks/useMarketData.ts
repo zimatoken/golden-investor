@@ -1,7 +1,11 @@
 // src/hooks/useMarketData.ts
 
 import { useCallback, useEffect, useState } from 'react';
-import { DEFAULT_MARKET, type MarketState } from '../data/manualMarket';
+import {
+  DEFAULT_MARKET,
+  normalizeMarket,
+  type MarketState,
+} from '../data/manualMarket';
 
 const STORAGE_KEY = 'golden-investor-market';
 
@@ -30,20 +34,24 @@ export function daysSinceUpdate(updatedAt: string): number {
   return Math.floor((now - updated) / (1000 * 60 * 60 * 24));
 }
 
+/**
+ * Загрузка из localStorage.
+ * Применяет normalizeMarket — гарантирует наличие yieldCurve
+ * и синхронизирует ofz10y/ofzShort.
+ */
 function loadMarket(): MarketState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Проверка структуры
       if (typeof parsed.keyRate === 'number' && typeof parsed.updatedAt === 'string') {
-        return parsed;
+        return normalizeMarket(parsed as MarketState);
       }
     }
   } catch (e) {
     console.warn('useMarketData: ошибка чтения, используем DEFAULT_MARKET');
   }
-  return DEFAULT_MARKET;
+  return normalizeMarket(DEFAULT_MARKET);
 }
 
 function saveMarket(state: MarketState): void {
@@ -53,30 +61,63 @@ function saveMarket(state: MarketState): void {
 /**
  * Хук для чтения/записи рыночных данных.
  * Автоматически сохраняет в localStorage при обновлении.
+ *
+ * Особенность v4: любые изменения проходят через normalizeMarket,
+ * чтобы ofz10y и ofzShort всегда были синхронизированы с yieldCurve.
  */
 export function useMarketData() {
   const [market, setMarketState] = useState<MarketState>(loadMarket);
 
-  // Сохранение при любом изменении
   useEffect(() => {
     saveMarket(market);
   }, [market]);
 
+  /**
+   * Обновление рыночных данных.
+   * Патч применяется, затем — нормализация (sync ofz10y/ofzShort из yieldCurve).
+   */
   const updateMarket = useCallback((patch: Partial<MarketState>) => {
-    setMarketState((prev) => ({
-      ...prev,
-      ...patch,
-      updatedAt: new Date().toISOString(),
-    }));
+    setMarketState((prev) => {
+      const merged = {
+        ...prev,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      };
+      return normalizeMarket(merged);
+    });
+  }, []);
+
+  /**
+   * Установить конкретную точку yield curve.
+   * Автоматически синхронизирует ofz10y/ofzShort, если это 120/12 месяцев.
+   */
+  const updateYieldPoint = useCallback((months: number, yieldValue: number) => {
+    setMarketState((prev) => {
+      const curve = prev.yieldCurve ?? [];
+      const idx = curve.findIndex((p) => p.months === months);
+      const newCurve =
+        idx >= 0
+          ? curve.map((p) => (p.months === months ? { ...p, yield: yieldValue } : p))
+          : [...curve, { months, yield: yieldValue }].sort((a, b) => a.months - b.months);
+
+      return normalizeMarket({
+        ...prev,
+        yieldCurve: newCurve,
+        updatedAt: new Date().toISOString(),
+      });
+    });
   }, []);
 
   const resetToDefault = useCallback(() => {
-    setMarketState({ ...DEFAULT_MARKET, updatedAt: new Date().toISOString() });
+    setMarketState(
+      normalizeMarket({ ...DEFAULT_MARKET, updatedAt: new Date().toISOString() })
+    );
   }, []);
 
   return {
     market,
     updateMarket,
+    updateYieldPoint,
     resetToDefault,
     isStale: isStale(market.updatedAt),
     daysSince: daysSinceUpdate(market.updatedAt),

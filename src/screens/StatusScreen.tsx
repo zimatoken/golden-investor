@@ -9,13 +9,19 @@ import { BanksTable } from '../components/BanksTable';
 import { EventsCalendar } from '../components/EventsCalendar';
 import { SourcesModal } from '../components/SourcesModal';
 import { SourceLink } from '../components/SourceLink';
+import { YieldCurve } from '../components/YieldCurve';
 import { MARKET_SOURCES } from '../data/sources';
 import { getOracleAdvice } from '../core/oracle';
-import type { MarketState } from '../data/manualMarket';
+import {
+  YIELD_CURVE_TENORS,
+  YIELD_CURVE_LABELS,
+  type MarketState,
+} from '../data/manualMarket';
 import type { PlanRow } from '../types/market';
 
 export function StatusScreen() {
-  const { market, updateMarket, resetToDefault, isStale, daysSince } = useMarketData();
+  const { market, updateMarket, resetToDefault, isStale, daysSince } =
+    useMarketData();
   const status = deriveStatus(market);
   const { monthAgo, recordStatus } = useDecisionLog();
 
@@ -61,6 +67,21 @@ export function StatusScreen() {
       resetToDefault();
       setEditOpen(false);
     }
+  };
+
+  /**
+   * Обновление точки кривой прямо в draft (для формы редактирования).
+   */
+  const handleCurveChange = (months: number, value: number) => {
+    setDraft((prev) => {
+      const curve = prev.yieldCurve ?? [];
+      const idx = curve.findIndex((p) => p.months === months);
+      const newCurve =
+        idx >= 0
+          ? curve.map((p) => (p.months === months ? { ...p, yield: value } : p))
+          : [...curve, { months, yield: value }].sort((a, b) => a.months - b.months);
+      return { ...prev, yieldCurve: newCurve };
+    });
   };
 
   const advice = getOracleAdvice(market, plan);
@@ -111,6 +132,9 @@ export function StatusScreen() {
           </button>
         </div>
       )}
+
+      {/* КРИВАЯ ДОХОДНОСТИ ОФЗ */}
+      {!editOpen && <YieldCurve points={market.yieldCurve} />}
 
       {/* Форма редактирования ЦБ */}
       {editOpen && (
@@ -164,18 +188,50 @@ export function StatusScreen() {
               onChange={(v) => setDraft({ ...draft, inflation: v })}
               sourceUrl={MARKET_SOURCES.inflation.url}
             />
-            <Field
-              label="10-летние ОФЗ, %"
-              value={draft.ofz10y}
-              onChange={(v) => setDraft({ ...draft, ofz10y: v })}
-              sourceUrl={MARKET_SOURCES.ofz10y.url}
-            />
-            <Field
-              label="Короткие ОФЗ, %"
-              value={draft.ofzShort}
-              onChange={(v) => setDraft({ ...draft, ofzShort: v })}
-              sourceUrl={MARKET_SOURCES.ofzShort.url}
-            />
+
+            {/* ─── КРИВАЯ ДОХОДНОСТИ ─── */}
+            <div style={{ marginTop: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                <label style={{ fontSize: 12, color: 'var(--subtext)', fontWeight: 600 }}>
+                  Кривая доходности ОФЗ, %
+                </label>
+                <SourceLink url={MARKET_SOURCES.ofz10y.url} label="Кривая ЦБ" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {YIELD_CURVE_TENORS.map((m) => {
+                  const point = draft.yieldCurve?.find((p) => p.months === m);
+                  const val = point?.yield ?? 0;
+                  return (
+                    <div key={m} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <label style={{ fontSize: 11, color: 'var(--subtext)', width: 50, textAlign: 'right' }}>
+                        {YIELD_CURVE_LABELS[m]}
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={val}
+                        onChange={(e) =>
+                          handleCurveChange(m, Math.max(0, parseFloat(e.target.value) || 0))
+                        }
+                        style={{
+                          flex: 1,
+                          padding: '0.4rem',
+                          border: '1px solid var(--border)',
+                          borderRadius: 8,
+                          background: 'var(--card-bg-soft)',
+                          color: 'var(--text)',
+                          fontSize: 13,
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <p style={{ fontSize: 11, color: 'var(--subtext-muted)', marginTop: 6, lineHeight: 1.5 }}>
+                ofz10y и ofzShort обновятся автоматически из 10-летней и 1-летней точек.
+              </p>
+            </div>
+
             <Field
               label="Средняя ставка по вкладам, %"
               value={draft.depositRate}
