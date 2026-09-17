@@ -1245,3 +1245,133 @@ body {
     font-size: 11px;
   }
 }
+
+/* ─── Pocket Mode ───────────────────── */
+
+.pocket-mode {
+  background: var(--card-bg);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin: 12px 0 20px 0;
+  text-align: center;
+}
+
+.pocket-mode.pocket-act { border-color: var(--success); }
+.pocket-mode.pocket-wait { border-color: var(--warning); }
+.pocket-mode.pocket-danger { border-color: var(--danger); }
+
+.pocket-header {
+  margin-bottom: 12px;
+}
+
+.pocket-title {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--subtext);
+  font-weight: 700;
+}
+
+.pocket-regime {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.pocket-regime-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.pocket-regime-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--heading);
+}
+
+.pocket-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 12px auto;
+  width: 60%;
+}
+
+.pocket-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.pocket-status-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.pocket-status-text {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--heading);
+  letter-spacing: 0.02em;
+}
+
+.pocket-hint {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin-bottom: 12px;
+}
+
+.pocket-event {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 8px 0;
+}
+
+.pocket-event-high {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.pocket-event-medium {
+  background: rgba(234, 179, 8, 0.1);
+  color: var(--warning);
+}
+
+.pocket-event-low {
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--primary);
+}
+
+.pocket-event-icon {
+  font-size: 12px;
+}
+
+.pocket-more {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--subtext);
+  font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .pocket-status-text {
+    font-size: 22px;
+  }
+  .pocket-status-icon {
+    font-size: 26px;
+  }
+  .pocket-regime-label {
+    font-size: 14px;
+  }
+  .pocket-mode {
+    padding: 16px;
+  }
+}
