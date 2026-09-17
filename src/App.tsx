@@ -9,11 +9,12 @@ import { DecisionLogScreen } from './screens/DecisionLogScreen';
 import { GoalScreen } from './screens/GoalScreen';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal } from './components/HelpModal';
+import { NotificationBanner } from './components/NotificationBanner';
 import { useTheme } from './hooks/useTheme';
+import { useNotifications } from './hooks/useNotifications';
 
 type Screen = 'status' | 'action' | 'goal' | 'map' | 'log';
 
-// Соответствие экранов и разделов инструкции
 const SCREEN_TO_HELP: Record<Screen, string> = {
   status: 'status',
   action: 'action',
@@ -22,7 +23,6 @@ const SCREEN_TO_HELP: Record<Screen, string> = {
   log: 'log',
 };
 
-// Иконки и подписи для кнопок навигации
 const NAV_ITEMS: { id: Screen; icon: string; label: string }[] = [
   { id: 'status', icon: '📍', label: 'Где я' },
   { id: 'action', icon: '⚡', label: 'Действие' },
@@ -37,6 +37,12 @@ export function App() {
   const [screen, setScreen] = useState<Screen>('status');
   const [helpOpen, setHelpOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const {
+    permission,
+    requestPermission,
+    bannerReminders,
+    dismissBanner,
+  } = useNotifications();
 
   // Онбординг: при первом заходе — открыть инструкцию
   useEffect(() => {
@@ -46,10 +52,13 @@ export function App() {
     }
   }, []);
 
-  // Закрытие модалки: помечаем онбординг как пройденный
   const handleCloseHelp = () => {
     setHelpOpen(false);
     localStorage.setItem(ONBOARDING_KEY, '1');
+  };
+
+  const handleRequestPermission = async () => {
+    await requestPermission();
   };
 
   return (
@@ -106,11 +115,9 @@ export function App() {
           );
         })}
 
-        {/* Кнопка темы */}
         <button
           onClick={toggleTheme}
           aria-label={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
-          title={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
           style={{
             padding: '0.5rem 0.6rem',
             background: 'rgba(255,255,255,0.08)',
@@ -121,18 +128,23 @@ export function App() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'background 0.15s ease',
           }}
         >
           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
         </button>
 
-        {/* Кнопка «?» — всегда справа */}
         <HelpButton onClick={() => setHelpOpen(true)} />
       </nav>
 
-      {/* ─── Экраны ────────────────────────── */}
       <main style={{ padding: '1rem', maxWidth: 900, margin: '0 auto' }}>
+        {/* Баннер уведомлений / напоминаний */}
+        <NotificationBanner
+          permission={permission}
+          reminders={bannerReminders}
+          onRequestPermission={handleRequestPermission}
+          onDismiss={dismissBanner}
+        />
+
         {screen === 'status' && <StatusScreen />}
         {screen === 'action' && <ActionScreen />}
         {screen === 'goal' && <GoalScreen />}
@@ -140,7 +152,6 @@ export function App() {
         {screen === 'log' && <DecisionLogScreen />}
       </main>
 
-      {/* ─── Модалка инструкции ────────────── */}
       <HelpModal
         open={helpOpen}
         onClose={handleCloseHelp}
