@@ -10,6 +10,7 @@ import { EventsCalendar } from '../components/EventsCalendar';
 import { SourcesModal } from '../components/SourcesModal';
 import { SourceLink } from '../components/SourceLink';
 import { YieldCurve } from '../components/YieldCurve';
+import { DurationRisk } from '../components/DurationRisk';
 import { MARKET_SOURCES } from '../data/sources';
 import { getOracleAdvice } from '../core/oracle';
 import {
@@ -135,6 +136,9 @@ export function StatusScreen() {
 
       {/* КРИВАЯ ДОХОДНОСТИ ОФЗ */}
       {!editOpen && <YieldCurve points={market.yieldCurve} />}
+
+      {/* ЧУВСТВИТЕЛЬНОСТЬ К СТАВКЕ (DURATION) */}
+      {!editOpen && <DurationRisk curve={market.yieldCurve} />}
 
       {/* Форма редактирования ЦБ */}
       {editOpen && (

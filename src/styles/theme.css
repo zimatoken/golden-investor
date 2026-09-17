@@ -196,3 +196,135 @@ body {
     height: 16px;
   }
 }
+
+/* ─── Duration Risk ─────────────────── */
+
+.duration-risk {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.duration-risk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.duration-risk-header h3 {
+  margin: 0;
+  color: var(--heading);
+  font-size: 16px;
+}
+
+.duration-risk-source {
+  font-size: 12px;
+  color: var(--subtext);
+}
+
+.duration-risk-intro {
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.55;
+  margin: 0 0 12px 0;
+}
+
+.duration-risk-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.duration-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+  gap: 6px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.duration-row-head {
+  font-size: 11px;
+  color: var(--subtext);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.duration-cell {
+  font-size: 13px;
+  text-align: center;
+  color: var(--text);
+  padding: 4px 0;
+}
+
+.duration-cell-label {
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.duration-sub {
+  font-size: 11px;
+  color: var(--subtext-muted);
+  font-weight: 400;
+}
+
+.duration-cell-neg {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.duration-cell-pos {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.duration-risk-meaning {
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.55;
+  padding: 10px 12px;
+  background: var(--card-bg-soft);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.duration-risk-meaning em {
+  font-style: normal;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.duration-risk-warning {
+  font-size: 12px;
+  color: var(--warning);
+  padding: 8px 12px;
+  border-left: 3px solid var(--warning);
+  background: var(--card-bg-soft);
+  border-radius: 4px;
+}
+
+@media (max-width: 480px) {
+  .duration-row {
+    grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr;
+    gap: 4px;
+  }
+  .duration-cell {
+    font-size: 11px;
+  }
+  .duration-sub {
+    font-size: 10px;
+  }
+}
