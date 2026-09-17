@@ -1,16 +1,6 @@
 // src/types/market.ts
-
-export interface MarketState {
-  keyRate: number;           // Ключевая ставка, %
-  keyRateDate: string;       // Когда установлена
-  depositRate: number;       // Средняя ставка по вкладам, %
-  ofz10y: number;            // Доходность 10-летних ОФЗ, %
-  ofzShort: number;          // Доходность коротких ОФЗ (1-3 года), %
-  goldPrice: number;         // Золото, руб/грамм
-  nextCBDate: string;        // Дата следующего заседания ЦБ
-  inflation: number;         // Инфляция, %
-  updatedAt: string;
-}
+//
+// Общие типы. MarketState теперь живёт в data/manualMarket.ts.
 
 export interface Scenario {
   label: 'optimistic' | 'base' | 'pessimistic';
@@ -21,11 +11,47 @@ export interface Scenario {
   isWorseThanDeposit: boolean;
 }
 
+/**
+ * Целевое поле, за которым следит сценарий карты.
+ */
+export type PlanTargetField =
+  | 'keyRate'
+  | 'inflation'
+  | 'ofz10y'
+  | 'depositRate';
+
+/**
+ * Оператор сравнения.
+ */
+export type PlanOperator = '>' | '<' | '>=' | '<=';
+
+/**
+ * Статус сценария в карте.
+ */
+export type ScenarioStatus =
+  | 'far'
+  | 'near'
+  | 'triggered'
+  | 'policy-conflict';
+
+/**
+ * Строка плана (карты сценариев).
+ */
 export interface PlanRow {
   id: string;
-  condition: string;        // «Если ЦБ снижает ставку на 1%»
-  action: string;          // «Покупаю длинные ОФЗ на 30%»
-  instrument: string;      // «ОФЗ 26218 / 26230»
+  condition: string;
+  action: string;
+  instrument: string;
+
+  // Опциональное отслеживание срабатывания:
+  targetField?: PlanTargetField;
+  operator?: PlanOperator;
+  targetValue?: number;
+
+  // Метаданные:
+  createdAt?: string;
+  updatedAt?: string;
+  triggeredAt?: string;
 }
 
 export type InstrumentType = 'ofz' | 'gold' | 'deposit';
@@ -44,7 +70,7 @@ export type OutcomeType = 'win' | 'loss' | 'unclear';
 
 export interface DecisionEntry {
   id: string;
-  date: string;          // ISO
+  date: string;
   actionType: 'buy' | 'sell' | 'wait';
   instrument: InstrumentType | null;
   amount: number | null;
@@ -56,11 +82,10 @@ export interface DecisionEntry {
     status: 'act' | 'wait' | 'do-nothing';
   };
 
-  // ─── НОВЫЕ ПОЛЯ (Фича 4) ──────────────────────
-  checkDate?: string;        // Когда проверять (date + 30 дней)
-  outcome?: OutcomeType;     // Результат проверки
-  checkedAt?: string;        // Когда пользователь ответил (ISO)
-  outcomeNote?: string;      // Комментарий пользователя (опционально)
+  checkDate?: string;
+  outcome?: OutcomeType;
+  checkedAt?: string;
+  outcomeNote?: string;
 }
 
 export interface StatusHistoryEntry {

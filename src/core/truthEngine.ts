@@ -1,6 +1,7 @@
 // src/core/truthEngine.ts
 
-import type { MarketState, Scenario } from '../types/market';
+import type { MarketState } from '../data/manualMarket';
+import type { Scenario } from '../types/market';
 
 /**
  * Три сценария — всегда три. Никогда один.
