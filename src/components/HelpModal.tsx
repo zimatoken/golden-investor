@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { X, Search, ChevronRight } from 'lucide-react';
 import { HELP_CONTENT, type HelpBlock } from '../data/helpContent';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { openPrintableInstructions, downloadInstructionsHTML } from '../core/helpPdf';
 
 interface Props {
   open: boolean;
@@ -116,22 +117,66 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
               </div>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Закрыть"
-            style={{
-              padding: '0.4rem',
-              background: 'transparent',
-              color: '#fff',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 8,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <X size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              onClick={downloadInstructionsHTML}
+              title="Скачать HTML-файл с инструкцией"
+              aria-label="Скачать инструкцию"
+              style={{
+                padding: '0.4rem 0.7rem',
+                background: 'transparent',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 8,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              📥 <span>{isMobile ? 'HTML' : 'Скачать'}</span>
+            </button>
+
+            <button
+              onClick={openPrintableInstructions}
+              title="Открыть для печати в PDF (выбери «Сохранить как PDF»)"
+              aria-label="Печать PDF"
+              style={{
+                padding: '0.4rem 0.7rem',
+                background: 'transparent',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 8,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              🖨 <span>{isMobile ? 'PDF' : 'Печать PDF'}</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              aria-label="Закрыть"
+              style={{
+                padding: '0.4rem',
+                background: 'transparent',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 8,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* ─── Тело ─────────────────────── */}
