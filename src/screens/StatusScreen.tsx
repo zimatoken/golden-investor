@@ -11,6 +11,7 @@ import { SourcesModal } from '../components/SourcesModal';
 import { SourceLink } from '../components/SourceLink';
 import { YieldCurve } from '../components/YieldCurve';
 import { DurationRisk } from '../components/DurationRisk';
+import { DataFreshness } from '../components/DataFreshness';
 import { MARKET_SOURCES } from '../data/sources';
 import { getOracleAdvice } from '../core/oracle';
 import {
@@ -133,6 +134,9 @@ export function StatusScreen() {
           </button>
         </div>
       )}
+
+      {/* СВЕЖЕСТЬ ДАННЫХ */}
+      {!editOpen && <DataFreshness market={market} />}
 
       {/* КРИВАЯ ДОХОДНОСТИ ОФЗ */}
       {!editOpen && <YieldCurve points={market.yieldCurve} />}
