@@ -12,6 +12,7 @@ import { SourceLink } from '../components/SourceLink';
 import { YieldCurve } from '../components/YieldCurve';
 import { DurationRisk } from '../components/DurationRisk';
 import { DataFreshness } from '../components/DataFreshness';
+import { MarketRegimeBadge } from '../components/MarketRegimeBadge';
 import { MARKET_SOURCES } from '../data/sources';
 import { getOracleAdvice } from '../core/oracle';
 import {
@@ -137,6 +138,9 @@ export function StatusScreen() {
 
       {/* СВЕЖЕСТЬ ДАННЫХ */}
       {!editOpen && <DataFreshness market={market} />}
+
+      {/* РЕЖИМ РЫНКА */}
+      {!editOpen && <MarketRegimeBadge market={market} />}
 
       {/* КРИВАЯ ДОХОДНОСТИ ОФЗ */}
       {!editOpen && <YieldCurve points={market.yieldCurve} />}
