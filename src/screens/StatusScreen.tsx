@@ -14,6 +14,10 @@ import { DurationRisk } from '../components/DurationRisk';
 import { DataFreshness } from '../components/DataFreshness';
 import { MarketRegimeBadge } from '../components/MarketRegimeBadge';
 import { EventRiskBanner } from '../components/EventRiskBanner';
+import { PolicySummary } from '../components/PolicySummary';
+import { PolicyEditor } from '../components/PolicyEditor';
+import { loadPolicy, savePolicy, isPolicyConfigured } from '../core/investmentPolicy';
+import type { InvestmentPolicy } from '../types/policy';
 import { MARKET_SOURCES } from '../data/sources';
 import { getOracleAdvice } from '../core/oracle';
 import {
@@ -32,6 +36,16 @@ export function StatusScreen() {
   const [editOpen, setEditOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [draft, setDraft] = useState<MarketState>(market);
+  const [policy, setPolicy] = useState<InvestmentPolicy>(() => loadPolicy());
+  const [policyConfigured, setPolicyConfigured] = useState<boolean>(() => isPolicyConfigured());
+  const [policyEditorOpen, setPolicyEditorOpen] = useState(false);
+
+  const handleSavePolicy = (next: InvestmentPolicy) => {
+    savePolicy(next);
+    setPolicy(next);
+    setPolicyConfigured(true);
+    setPolicyEditorOpen(false);
+  };
 
   const [plan] = useState<PlanRow[]>(() => {
     try {
@@ -142,6 +156,15 @@ export function StatusScreen() {
 
       {/* СВЕЖЕСТЬ ДАННЫХ */}
       {!editOpen && <DataFreshness market={market} />}
+
+      {/* ПОЛИТИКА ПОЛЬЗОВАТЕЛЯ */}
+      {!editOpen && (
+        <PolicySummary
+          policy={policy}
+          configured={policyConfigured}
+          onEdit={() => setPolicyEditorOpen(true)}
+        />
+      )}
 
       {/* РЕЖИМ РЫНКА */}
       {!editOpen && <MarketRegimeBadge market={market} />}
@@ -521,6 +544,14 @@ export function StatusScreen() {
 
       {/* МОДАЛКА «ВСЕ ИСТОЧНИКИ» */}
       <SourcesModal open={sourcesOpen} onClose={() => setSourcesOpen(false)} />
+
+      {/* МОДАЛКА «ПОЛИТИКА» */}
+      <PolicyEditor
+        open={policyEditorOpen}
+        initial={policy}
+        onSave={handleSavePolicy}
+        onClose={() => setPolicyEditorOpen(false)}
+      />
     </div>
   );
 }
