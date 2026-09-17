@@ -967,3 +967,281 @@ body {
     font-size: 12px;
   }
 }
+
+/* ─── Invalidation Alert ────────────── */
+
+.invalidation-alert {
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  background: rgba(234, 179, 8, 0.08);
+}
+
+.invalidation-alert-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.invalidation-alert-icon {
+  font-size: 16px;
+}
+
+.invalidation-alert-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--warning);
+}
+
+.invalidation-alert-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invalidation-alert-item {
+  padding: 8px 10px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.invalidation-alert-rule {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.invalidation-alert-current {
+  font-size: 12px;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.invalidation-alert-note {
+  font-size: 12px;
+  color: var(--subtext);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.invalidation-alert-action {
+  margin-top: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 600;
+  background: var(--card-bg);
+  border-radius: 6px;
+  border-left: 3px solid var(--warning);
+}
+
+/* ─── Invalidation Editor ───────────── */
+
+.invalidation-editor-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.invalidation-editor {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--modal-shadow);
+  color: var(--text);
+}
+
+.invalidation-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.invalidation-editor-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--heading);
+}
+
+.invalidation-editor-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: var(--subtext);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.invalidation-editor-close:hover {
+  background: var(--card-bg-soft);
+  color: var(--text);
+}
+
+.invalidation-editor-intro {
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.55;
+  margin: 0 0 16px 0;
+}
+
+.invalidation-editor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.invalidation-editor-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--card-bg-soft);
+  border-radius: 8px;
+}
+
+.invalidation-editor-item-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.invalidation-editor-item-rule {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.invalidation-editor-item-note {
+  font-size: 12px;
+  color: var(--subtext);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.invalidation-editor-item-remove {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--subtext);
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.invalidation-editor-item-remove:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+}
+
+.invalidation-editor-empty {
+  font-size: 13px;
+  color: var(--subtext);
+  padding: 12px;
+  background: var(--card-bg-soft);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-style: italic;
+}
+
+.invalidation-editor-form {
+  padding: 12px;
+  background: var(--card-bg-soft);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.invalidation-editor-form-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--subtext);
+  margin-bottom: 10px;
+}
+
+.invalidation-editor-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.invalidation-editor-row label {
+  font-size: 12px;
+  color: var(--subtext);
+}
+
+.invalidation-editor-row select,
+.invalidation-editor-row input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.invalidation-editor-add {
+  margin-top: 8px;
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.invalidation-editor-add:hover {
+  background: var(--primary-dark);
+}
+
+.invalidation-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.invalidation-editor-btn-primary {
+  padding: 0.6rem 1.5rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .invalidation-editor-row {
+    grid-template-columns: 90px 1fr;
+    gap: 6px;
+  }
+  .invalidation-editor-row label {
+    font-size: 11px;
+  }
+}

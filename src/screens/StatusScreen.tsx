@@ -17,6 +17,9 @@ import { EventRiskBanner } from '../components/EventRiskBanner';
 import { PolicySummary } from '../components/PolicySummary';
 import { PolicyEditor } from '../components/PolicyEditor';
 import { DecisionAssessment } from '../components/DecisionAssessment';
+import { InvalidationAlert } from '../components/InvalidationAlert';
+import { InvalidationEditor } from '../components/InvalidationEditor';
+import { syncInvalidations, hasInvalidations } from '../core/invalidationEngine';
 import { loadPolicy, savePolicy, isPolicyConfigured } from '../core/investmentPolicy';
 import type { InvestmentPolicy } from '../types/policy';
 import { MARKET_SOURCES } from '../data/sources';
@@ -47,6 +50,15 @@ export function StatusScreen() {
     setPolicyConfigured(true);
     setPolicyEditorOpen(false);
   };
+
+  const [invalidationEditorOpen, setInvalidationEditorOpen] = useState(false);
+  const [invalidationVersion, setInvalidationVersion] = useState(0);
+
+  // Синхронизировать triggered-флаги при загрузке и при изменении market
+  useEffect(() => {
+    syncInvalidations(market);
+    setInvalidationVersion((v) => v + 1);
+  }, [market]);
 
   const [plan] = useState<PlanRow[]>(() => {
     try {
@@ -152,6 +164,11 @@ export function StatusScreen() {
         </div>
       )}
 
+      {/* АЛЕРТ ОТМЕНЫ СЦЕНАРИЯ */}
+      {!editOpen && (
+        <InvalidationAlert key={invalidationVersion} market={market} />
+      )}
+
       {/* СОБЫТИЙНЫЙ РИСК */}
       {!editOpen && <EventRiskBanner market={market} />}
 
@@ -165,6 +182,27 @@ export function StatusScreen() {
           configured={policyConfigured}
           onEdit={() => setPolicyEditorOpen(true)}
         />
+      )}
+
+      {/* КНОПКА «ЧТО ИЗМЕНИТ МОЁ МНЕНИЕ?» */}
+      {!editOpen && policyConfigured && (
+        <button
+          onClick={() => setInvalidationEditorOpen(true)}
+          style={{
+            width: '100%',
+            margin: '8px 0 0 0',
+            padding: '0.7rem 1rem',
+            background: 'transparent',
+            color: 'var(--primary)',
+            border: '1px dashed var(--primary)',
+            borderRadius: 10,
+            cursor: 'pointer',
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          ⚠️ Что изменит моё мнение? {hasInvalidations() ? '' : '(добавить условия)'}
+        </button>
       )}
 
       {/* РЕЖИМ РЫНКА */}
@@ -554,6 +592,12 @@ export function StatusScreen() {
 
       {/* МОДАЛКА «ВСЕ ИСТОЧНИКИ» */}
       <SourcesModal open={sourcesOpen} onClose={() => setSourcesOpen(false)} />
+
+      <InvalidationEditor
+        open={invalidationEditorOpen}
+        onClose={() => setInvalidationEditorOpen(false)}
+        onChange={() => setInvalidationVersion((v) => v + 1)}
+      />
 
       {/* МОДАЛКА «ПОЛИТИКА» */}
       <PolicyEditor
