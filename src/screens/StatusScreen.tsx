@@ -13,6 +13,7 @@ import { YieldCurve } from '../components/YieldCurve';
 import { DurationRisk } from '../components/DurationRisk';
 import { DataFreshness } from '../components/DataFreshness';
 import { MarketRegimeBadge } from '../components/MarketRegimeBadge';
+import { EventRiskBanner } from '../components/EventRiskBanner';
 import { MARKET_SOURCES } from '../data/sources';
 import { getOracleAdvice } from '../core/oracle';
 import {
@@ -135,6 +136,9 @@ export function StatusScreen() {
           </button>
         </div>
       )}
+
+      {/* СОБЫТИЙНЫЙ РИСК */}
+      {!editOpen && <EventRiskBanner market={market} />}
 
       {/* СВЕЖЕСТЬ ДАННЫХ */}
       {!editOpen && <DataFreshness market={market} />}
