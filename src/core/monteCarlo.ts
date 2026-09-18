@@ -278,3 +278,215 @@ export function getScenarioParams(
     },
   ];
 }
+
+/* ─── PHASE 7.3: Stress Test (5 шоков) ──────── */
+
+/**
+ * Один стресс-сценарий.
+ */
+export interface StressScenario {
+  id: string;
+  icon: string;
+  title: string;
+  /** Медиана при шоке (номинал) */
+  median: number;
+  /** Медиана при шоке (реально, с инфляцией) */
+  realMedian: number;
+  /** Худший сценарий (5-й процентиль) */
+  p5: number;
+  /** Что произошло */
+  impact: string;
+  /** Тон: positive / negative / neutral */
+  tone: 'positive' | 'negative' | 'neutral';
+}
+
+export interface StressTestResult {
+  baseMedian: number;           // Базовый сценарий (без шоков)
+  baseRealMedian: number;       // Базовая реальная медиана
+  scenarios: StressScenario[];
+}
+
+/**
+ * Внутренняя симуляция с модификатором дохода по годам.
+ *
+ * @param modifier — функция, которая возвращает множитель для года (или null, если модификатор не нужен)
+ */
+function runMonteCarloWithModifier(
+  baseAnnualReturn: number,
+  volatility: number,
+  horizonYears: number,
+  initialAmount: number,
+  inflation: number,
+  modifier: (yearIndex: number, randomReturn: number) => number,
+  numSimulations = 500
+): { median: number; realMedian: number; p5: number } {
+  const finalAmounts: number[] = [];
+  const inflationFactor = Math.pow(1 + inflation / 100, horizonYears);
+
+  for (let i = 0; i < numSimulations; i++) {
+    let amount = initialAmount;
+    for (let year = 0; year < horizonYears; year++) {
+      const randomReturn = baseAnnualReturn + volatility * normalRandom();
+      const appliedReturn = modifier(year, randomReturn);
+      amount = amount * (1 + appliedReturn / 100);
+      if (amount < 0) amount = 0;
+    }
+    finalAmounts.push(amount);
+  }
+
+  finalAmounts.sort((a, b) => a - b);
+  const median = finalAmounts[Math.floor(numSimulations / 2)];
+  const p5 = finalAmounts[Math.floor(numSimulations * 0.05)];
+
+  return {
+    median,
+    realMedian: median / inflationFactor,
+    p5,
+  };
+}
+
+/**
+ * Запускает стресс-тест: 5 детерминированных шоков.
+ *
+ * @param instrument — инструмент
+ * @param market — текущий market
+ * @param horizonYears — горизонт
+ * @param initialAmount — начальная сумма
+ */
+export function runStressTest(
+  instrument: InstrumentType,
+  market: MarketState,
+  horizonYears: number,
+  initialAmount: number
+): StressTestResult {
+  const baseParams = getMonteCarloParams(instrument, market);
+  const baseAnnualReturn = baseParams.annualReturn;
+  const volatility = baseParams.volatility;
+
+  // Базовый сценарий
+  const base = runMonteCarloWithModifier(
+    baseAnnualReturn,
+    volatility,
+    horizonYears,
+    initialAmount,
+    market.inflation,
+    (_, r) => r
+  );
+
+  const scenarios: StressScenario[] = [];
+
+  // 1. Инфляционный шок
+  const inflationShock = runMonteCarloWithModifier(
+    baseAnnualReturn,
+    volatility,
+    horizonYears,
+    initialAmount,
+    market.inflation + 4,
+    (_, r) => r
+  );
+  const inflationLoss = base.realMedian > 0
+    ? Math.round(((inflationShock.realMedian - base.realMedian) / base.realMedian) * 100)
+    : 0;
+  scenarios.push({
+    id: 'inflation-shock',
+    icon: '🔥',
+    title: `Инфляция +4 п.п. (${market.inflation}% → ${(market.inflation + 4).toFixed(1)}%)`,
+    median: inflationShock.median,
+    realMedian: inflationShock.realMedian,
+    p5: inflationShock.p5,
+    impact: `Реальная медиана ${formatMoney(inflationShock.realMedian)} ₽ (${inflationLoss}% к базовой)`,
+    tone: 'negative',
+  });
+
+  // 2. Ставка +2 п.п. (для ОФЗ — через duration)
+  if (instrument === 'ofz') {
+    const duration = 8;
+    const firstYearReturn = baseAnnualReturn - duration * 2;
+    const rateUp = runMonteCarloWithModifier(
+      baseAnnualReturn,
+      volatility,
+      horizonYears,
+      initialAmount,
+      market.inflation,
+      (year, r) => (year === 0 ? firstYearReturn : r)
+    );
+    scenarios.push({
+      id: 'rate-up',
+      icon: '📈',
+      title: 'Ставка +2 п.п.',
+      median: rateUp.median,
+      realMedian: rateUp.realMedian,
+      p5: rateUp.p5,
+      impact: `Первый год: ${firstYearReturn.toFixed(2)}% (тело падает по дюрации)`,
+      tone: 'negative',
+    });
+
+    // 3. Ставка −2 п.п.
+    const firstYearReturnDown = baseAnnualReturn + duration * 2;
+    const rateDown = runMonteCarloWithModifier(
+      baseAnnualReturn,
+      volatility,
+      horizonYears,
+      initialAmount,
+      market.inflation,
+      (year, r) => (year === 0 ? firstYearReturnDown : r)
+    );
+    scenarios.push({
+      id: 'rate-down',
+      icon: '📉',
+      title: 'Ставка −2 п.п.',
+      median: rateDown.median,
+      realMedian: rateDown.realMedian,
+      p5: rateDown.p5,
+      impact: `Первый год: +${firstYearReturnDown.toFixed(2)}% (тело растёт по дюрации)`,
+      tone: 'positive',
+    });
+  }
+
+  // 4. Волатильность ×2
+  const volShock = runMonteCarloWithModifier(
+    baseAnnualReturn,
+    volatility * 2,
+    horizonYears,
+    initialAmount,
+    market.inflation,
+    (_, r) => r
+  );
+  scenarios.push({
+    id: 'volatility-x2',
+    icon: '💥',
+    title: 'Волатильность ×2',
+    median: volShock.median,
+    realMedian: volShock.realMedian,
+    p5: volShock.p5,
+    impact: `Худший (5%) падает до ${formatMoney(volShock.p5)} ₽`,
+    tone: 'neutral',
+  });
+
+  // 5. Стагнация — 3 года нулевого роста
+  const stagnationYears = 3;
+  const stagnation = runMonteCarloWithModifier(
+    baseAnnualReturn,
+    volatility,
+    horizonYears,
+    initialAmount,
+    market.inflation,
+    (year, r) => (year < stagnationYears ? 0 : r)
+  );
+  scenarios.push({
+    id: 'stagnation',
+    icon: '🧊',
+    title: `Стагнация ${stagnationYears} года`,
+    median: stagnation.median,
+    realMedian: stagnation.realMedian,
+    p5: stagnation.p5,
+    impact: `Первые ${stagnationYears} года — нулевой рост`,
+    tone: 'negative',
+  });
+
+  return {
+    baseMedian: base.median,
+    baseRealMedian: base.realMedian,
+    scenarios,
+  };
+}

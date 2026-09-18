@@ -14,6 +14,7 @@ import {
 } from '../core/monteCarlo';
 import { MonteCarloChart } from '../components/MonteCarloChart';
 import { ActionGuide } from '../components/ActionGuide';
+import { StressTest } from '../components/StressTest';
 import type { InstrumentType } from '../types/market';
 
 type Step = 'choose-instrument' | 'check-plan' | 'paused' | 'scenarios';
@@ -502,6 +503,14 @@ export function ActionScreen() {
             )}
           </div>
         </div>
+
+        {/* СТРЕСС-ТЕСТ */}
+        <StressTest
+          instrument={instrument}
+          market={market}
+          horizonYears={horizon}
+          initialAmount={amount}
+        />
 
         {/* ГАЙД ПО ПОКУПКЕ */}
         <ActionGuide instrument={instrument} />
