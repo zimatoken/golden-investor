@@ -26,7 +26,7 @@ export interface DecisionFactor {
 }
 
 export interface DecisionAssessment {
-  instrument: 'ofz-long';
+  instrument: 'ofz-long' | 'gold' | 'deposit';
   instrumentLabel: string;
   status: ScenarioStatus;
   statusLabel: string;
@@ -254,4 +254,352 @@ export function assessLongOFZ(input: DecisionInput): DecisionAssessment {
     disclaimer:
       'Это не рекомендация. Это оценка соответствия сценария твоей политике. Решение — за тобой.',
   };
+}
+
+/* ─── PHASE 9: Расширение на золото и вклад ──── */
+
+/**
+ * Оценка сценария «Золото как защитный актив».
+ */
+export function assessGold(input: DecisionInput): DecisionAssessment {
+  const { market, regime, dataQuality, eventRisk, policy } = input;
+
+  const supports: DecisionFactor[] = [];
+  const obstacles: DecisionFactor[] = [];
+  const nextSteps: string[] = [];
+
+  // ─── 1. РЫНОК ───────────────────────────────
+
+  if (market.inflation > 7) {
+    supports.push({
+      text: `Инфляция ${market.inflation}% — выше 7%. Золото исторически используется как страховка.`,
+      tone: 'positive',
+    });
+  } else if (market.inflation < 4) {
+    obstacles.push({
+      text: `Инфляция ${market.inflation}% — низкая. Защитная функция золота ослабевает.`,
+      tone: 'neutral',
+    });
+  } else {
+    supports.push({
+      text: `Инфляция ${market.inflation}% — умеренная. Золото может выполнять защитную функцию.`,
+      tone: 'neutral',
+    });
+  }
+
+  if (regime.type === 'INFLATION_SHOCK') {
+    supports.push({
+      text: `Режим рынка: ${regime.label} — золото исторически в таких периодах защищает капитал.`,
+      tone: 'positive',
+    });
+  } else if (regime.type === 'LOW_RATES_STABLE') {
+    obstacles.push({
+      text: `Режим рынка: ${regime.label} — золото редко обгоняет рынок в стабильной среде.`,
+      tone: 'neutral',
+    });
+  }
+
+  // ─── 2. ПОЛИТИКА ────────────────────────────
+
+  const horizonYears = HORIZON_YEARS[policy.horizon];
+  if (horizonYears >= 10) {
+    supports.push({
+      text: `Горизонт ${policy.horizon} — золото лучше всего работает на длинном сроке (10+ лет).`,
+      tone: 'positive',
+    });
+  } else if (horizonYears >= 5) {
+    supports.push({
+      text: `Горизонт ${policy.horizon} — приемлемо для золота.`,
+      tone: 'neutral',
+    });
+  } else {
+    obstacles.push({
+      text: `Горизонт ${policy.horizon} — короткий. Золото на коротком сроке может дать просадку 30%+.`,
+      tone: 'negative',
+    });
+  }
+
+  const drawdownPct = DRAWDOWN_VALUE[policy.drawdownTolerance];
+  if (drawdownPct >= 20) {
+    supports.push({
+      text: `Просадка до −${drawdownPct}% — покрывает историческую волатильность золота.`,
+      tone: 'positive',
+    });
+  } else {
+    obstacles.push({
+      text: `Просадка до −${drawdownPct}% — золото может уходить ниже этого уровня.`,
+      tone: 'negative',
+    });
+  }
+
+  if (policy.goal === 'protect-inflation') {
+    supports.push({
+      text: 'Цель «защита от инфляции» — золото выполняет её как страховка.',
+      tone: 'positive',
+    });
+  } else if (policy.goal === 'grow') {
+    obstacles.push({
+      text: 'Цель «рост капитала» — золото редко обгоняет фондовый рынок на длинном сроке.',
+      tone: 'neutral',
+    });
+  }
+
+  // ─── 3. EVENT RISK ──────────────────────────
+
+  if (eventRisk.level === 'high') {
+    obstacles.push({
+      text: `${eventRisk.label} — заседание ЦБ. Золото может резко реагировать на решение.`,
+      tone: 'neutral',
+    });
+  }
+
+  // ─── 4. DATA QUALITY ────────────────────────
+
+  if (dataQuality.overall === 'stale') {
+    obstacles.push({
+      text: `Данные устарели (${dataQuality.freshCount} из ${dataQuality.totalCount} в норме).`,
+      tone: 'negative',
+    });
+  }
+
+  // ─── 5. ИТОГОВЫЙ СТАТУС ─────────────────────
+
+  let status: ScenarioStatus;
+  let statusLabel: string;
+  let statusIcon: string;
+
+  const negatives = obstacles.filter((o) => o.tone === 'negative').length;
+  const positives = supports.filter((s) => s.tone === 'positive').length;
+
+  if (dataQuality.overall === 'stale') {
+    status = 'INSUFFICIENT_DATA';
+    statusLabel = 'Недостаточно данных';
+    statusIcon = '❓';
+  } else if (negatives >= 2 || (negatives >= 1 && positives === 0)) {
+    status = 'INVALID';
+    statusLabel = 'Сценарий противоречит политике';
+    statusIcon = '❌';
+  } else if (positives >= 3 && negatives === 0) {
+    status = 'SUPPORTED';
+    statusLabel = 'Сценарий поддерживается';
+    statusIcon = '✅';
+  } else if (positives >= 1 && negatives <= 1) {
+    status = 'PARTIAL';
+    statusLabel = 'Сценарий частично подходит';
+    statusIcon = '⚠️';
+  } else {
+    status = 'WAIT';
+    statusLabel = 'Подождать';
+    statusIcon = '⏸';
+  }
+
+  // ─── 6. NEXT STEPS ──────────────────────────
+
+  if (status === 'SUPPORTED') {
+    nextSteps.push('Рассмотри ОМС или БПИФ золота. См. гайд в «⚡ Действие».');
+    nextSteps.push('Не вкладывай всё — золото это страховка, а не двигатель дохода.');
+  } else if (status === 'PARTIAL') {
+    nextSteps.push('Проверь свою политику: возможно, горизонт или просадка не соответствуют золоту.');
+    nextSteps.push('Запиши сценарий в Карту: «Если инфляция > X% — рассмотрю золото».');
+  } else if (status === 'INVALID') {
+    nextSteps.push('Твоя политика не подходит под золото. Рассмотри ОФЗ или вклад.');
+    nextSteps.push('Или измени политику, если готов к волатильности золота.');
+  } else if (status === 'WAIT') {
+    nextSteps.push('Дождись условий: инфляция выше 7%, горизонт 10+ лет.');
+  } else {
+    nextSteps.push('Обнови данные ЦБ. Без свежих данных анализ невозможен.');
+  }
+
+  return {
+    instrument: 'gold',
+    instrumentLabel: 'Золото (защитный актив)',
+    status,
+    statusLabel,
+    statusIcon,
+    supports,
+    obstacles,
+    nextSteps,
+    disclaimer:
+      'Это не рекомендация. Золото не платит купон — доход формируется только за счёт изменения цены. Решение — за тобой.',
+  };
+}
+
+/**
+ * Оценка сценария «Вклад — ликвидность и сохранение».
+ */
+export function assessDeposit(input: DecisionInput): DecisionAssessment {
+  const { market, regime, dataQuality, eventRisk, policy } = input;
+
+  const supports: DecisionFactor[] = [];
+  const obstacles: DecisionFactor[] = [];
+  const nextSteps: string[] = [];
+
+  const realDeposit = market.depositRate - market.inflation;
+
+  // ─── 1. РЫНОК ───────────────────────────────
+
+  if (realDeposit > 2) {
+    supports.push({
+      text: `Реальная ставка вклада: +${realDeposit.toFixed(2)} п.п. — покупательная способность сохраняется.`,
+      tone: 'positive',
+    });
+  } else if (realDeposit > 0) {
+    supports.push({
+      text: `Реальная ставка вклада: +${realDeposit.toFixed(2)} п.п. — небольшой плюс к инфляции.`,
+      tone: 'neutral',
+    });
+  } else {
+    obstacles.push({
+      text: `Реальная ставка вклада: ${realDeposit.toFixed(2)} п.п. — вклад не покрывает инфляцию.`,
+      tone: 'negative',
+    });
+  }
+
+  if (market.keyRate >= 13) {
+    supports.push({
+      text: `Ключевая ставка ${market.keyRate}% — высокая. Ставки по вкладам обычно держатся близко к ней.`,
+      tone: 'positive',
+    });
+  } else if (market.keyRate < 10) {
+    obstacles.push({
+      text: `Ключевая ставка ${market.keyRate}% — низкая. Вклады теряют привлекательность.`,
+      tone: 'negative',
+    });
+  }
+
+  if (regime.type === 'HIGH_RATES_DISINFLATION' || regime.type === 'HIGH_RATES_STICKY') {
+    supports.push({
+      text: `Режим рынка: ${regime.label} — высокие ставки, вклады дают хороший процент.`,
+      tone: 'positive',
+    });
+  }
+
+  // ─── 2. ПОЛИТИКА ────────────────────────────
+
+  const horizonYears = HORIZON_YEARS[policy.horizon];
+  if (horizonYears <= 3) {
+    supports.push({
+      text: `Горизонт ${policy.horizon} — короткий. Вклад подходит для такого срока.`,
+      tone: 'positive',
+    });
+  } else if (horizonYears >= 7) {
+    obstacles.push({
+      text: `Горизонт ${policy.horizon} — длинный. На длинном сроке вклад обычно проигрывает другим инструментам.`,
+      tone: 'neutral',
+    });
+  }
+
+  if (policy.liquidityNeed === 'high') {
+    supports.push({
+      text: 'Ликвидность нужна постоянно — вклад (с возможностью частичного снятия) подходит.',
+      tone: 'positive',
+    });
+  } else if (policy.liquidityNeed === 'low') {
+    obstacles.push({
+      text: 'Ликвидность не критична — вклад не использует полностью твой горизонт.',
+      tone: 'neutral',
+    });
+  }
+
+  if (policy.goal === 'preserve') {
+    supports.push({
+      text: 'Цель «сохранить капитал» — вклад выполняет её как базовый инструмент.',
+      tone: 'positive',
+    });
+  } else if (policy.goal === 'grow') {
+    obstacles.push({
+      text: 'Цель «рост капитала» — вклад не подходит: он сохраняет, но не растит.',
+      tone: 'negative',
+    });
+  }
+
+  // ─── 3. EVENT RISK ──────────────────────────
+
+  if (eventRisk.level === 'high') {
+    obstacles.push({
+      text: `${eventRisk.label} — заседание ЦБ. Ставки по вкладам могут измениться.`,
+      tone: 'neutral',
+    });
+  }
+
+  // ─── 4. DATA QUALITY ────────────────────────
+
+  if (dataQuality.overall === 'stale') {
+    obstacles.push({
+      text: `Данные устарели (${dataQuality.freshCount} из ${dataQuality.totalCount} в норме).`,
+      tone: 'negative',
+    });
+  }
+
+  // ─── 5. ИТОГОВЫЙ СТАТУС ─────────────────────
+
+  let status: ScenarioStatus;
+  let statusLabel: string;
+  let statusIcon: string;
+
+  const negatives = obstacles.filter((o) => o.tone === 'negative').length;
+  const positives = supports.filter((s) => s.tone === 'positive').length;
+
+  if (dataQuality.overall === 'stale') {
+    status = 'INSUFFICIENT_DATA';
+    statusLabel = 'Недостаточно данных';
+    statusIcon = '❓';
+  } else if (negatives >= 2 || (negatives >= 1 && positives === 0)) {
+    status = 'INVALID';
+    statusLabel = 'Сценарий противоречит политике';
+    statusIcon = '❌';
+  } else if (positives >= 3 && negatives === 0) {
+    status = 'SUPPORTED';
+    statusLabel = 'Сценарий поддерживается';
+    statusIcon = '✅';
+  } else if (positives >= 1 && negatives <= 1) {
+    status = 'PARTIAL';
+    statusLabel = 'Сценарий частично подходит';
+    statusIcon = '⚠️';
+  } else {
+    status = 'WAIT';
+    statusLabel = 'Подождать';
+    statusIcon = '⏸';
+  }
+
+  // ─── 6. NEXT STEPS ──────────────────────────
+
+  if (status === 'SUPPORTED') {
+    nextSteps.push('Сравни ставки в разных банках — разница может быть до 1.5 п.п.');
+    nextSteps.push('Проверь лимит АСВ (1.4 млн ₽ на банк). При большей сумме — разложи по банкам.');
+  } else if (status === 'PARTIAL') {
+    nextSteps.push('Вклад может быть буфером ликвидности, но не защитой от инфляции.');
+    nextSteps.push('Рассмотри: часть — вклад, часть — в инструмент с более высокой реальной доходностью.');
+  } else if (status === 'INVALID') {
+    nextSteps.push('Твоя политика не подходит под вклад. Рассмотри ОФЗ или золото.');
+    nextSteps.push('Или измени политику, если хочешь больше риска ради роста.');
+  } else if (status === 'WAIT') {
+    nextSteps.push('Условия для вклада сейчас нейтральные. Запиши сценарий в Карту.');
+  } else {
+    nextSteps.push('Обнови данные ЦБ. Без свежих данных анализ невозможен.');
+  }
+
+  return {
+    instrument: 'deposit',
+    instrumentLabel: 'Вклад (ликвидность и сохранение)',
+    status,
+    statusLabel,
+    statusIcon,
+    supports,
+    obstacles,
+    nextSteps,
+    disclaimer:
+      'Это не рекомендация. Вклад — это не инвестиция, а инструмент сохранения денег. Реальная доходность зависит от инфляции и налогов. Решение — за тобой.',
+  };
+}
+
+/**
+ * Оценка всех трёх сценариев сразу.
+ */
+export function assessAll(input: DecisionInput): DecisionAssessment[] {
+  return [
+    assessLongOFZ(input),
+    assessGold(input),
+    assessDeposit(input),
+  ];
 }
