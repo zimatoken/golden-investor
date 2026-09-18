@@ -296,7 +296,26 @@ export function ActionScreen() {
             <Metric label="Медиана" value={`${formatMoney(mc.median)} ₽`} color="var(--text)" />
             <Metric label="Худший (5%)" value={`${formatMoney(mc.p5)} ₽`} color="var(--danger)" />
             <Metric label="Лучший (95%)" value={`${formatMoney(mc.p95)} ₽`} color="var(--success)" />
-            <Metric label="VaR 95%" value={`${mc.var95Percent.toFixed(1)}%`} color="var(--warning)" />
+            <Metric
+              label="VaR 95% (модель)"
+              value={`${mc.var95Percent.toFixed(1)}%`}
+              color="var(--warning)"
+            />
+          </div>
+
+          <div
+            style={{
+              marginTop: 8,
+              paddingTop: 8,
+              borderTop: '1px solid var(--border)',
+              fontSize: 11,
+              fontStyle: 'italic',
+              color: 'var(--subtext)',
+            }}
+          >
+            VaR 95% — модельная оценка порогового убытка при заданных предположениях
+            (доходность {params.annualReturn}%, волатильность {params.volatility}%,
+            горизонт {horizon} лет). Это не максимальный возможный убыток.
           </div>
 
           {/* Гистограмма */}

@@ -7,7 +7,7 @@ export const INSTRUMENTS: InstrumentOption[] = [
     id: 'ofz',
     icon: '📈',
     title: 'ОФЗ',
-    subtitle: 'Длинные облигации, 10+ лет',
+    subtitle: 'Гособлигации. Длинные выпуски сильнее реагируют на ставку',
   },
   {
     id: 'gold',

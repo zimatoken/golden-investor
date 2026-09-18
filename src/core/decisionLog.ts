@@ -75,26 +75,27 @@ export function recordOutcome(id: string, outcome: OutcomeType, note?: string): 
  * Статистика по проверенным решениям.
  */
 export interface OutcomeStats {
-  checked: number;        // Всего проверено
-  win: number;
-  loss: number;
-  unclear: number;
-  winRate: number;        // 0..100, win / (win + loss)
-  pending: number;        // Ждут проверки
+  checked: number;           // Всего проверено
+  scenarioKept: number;      // Сценарий сохранился
+  scenarioChanged: number;   // Сценарий изменился
+  unclear: number;           // Неясно
+  pending: number;           // Ждут проверки
 }
 
 export function analyzeOutcomes(decisions: DecisionEntry[]): OutcomeStats {
   const checked = decisions.filter((d) => d.outcome);
-  const win = checked.filter((d) => d.outcome === 'win').length;
-  const loss = checked.filter((d) => d.outcome === 'loss').length;
+  const scenarioKept = checked.filter((d) => d.outcome === 'win').length;
+  const scenarioChanged = checked.filter((d) => d.outcome === 'loss').length;
   const unclear = checked.filter((d) => d.outcome === 'unclear').length;
-
-  const decided = win + loss;
-  const winRate = decided > 0 ? Math.round((win / decided) * 100) : 0;
-
   const pending = getPendingOutcomes(decisions).length;
 
-  return { checked: checked.length, win, loss, unclear, winRate, pending };
+  return {
+    checked: checked.length,
+    scenarioKept,
+    scenarioChanged,
+    unclear,
+    pending,
+  };
 }
 
 /* ─── Утилиты ────────────────────────────── */

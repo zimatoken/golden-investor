@@ -159,25 +159,29 @@ export function DecisionLogScreen() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))',
               gap: 12,
             }}
           >
             <StatCell label="Проверено" value={outcomes.checked} color="var(--text)" />
-            <StatCell label="🟢 Сработало" value={outcomes.win} color="var(--success)" />
-            <StatCell label="🔴 Не сработало" value={outcomes.loss} color="var(--danger)" />
+            <StatCell label="🟢 Сценарий сохранился" value={outcomes.scenarioKept} color="var(--success)" />
+            <StatCell label="🔴 Сценарий изменился" value={outcomes.scenarioChanged} color="var(--danger)" />
             <StatCell label="⚪ Неясно" value={outcomes.unclear} color="var(--subtext)" />
-            <StatCell
-              label="Win Rate"
-              value={`${outcomes.winRate}%`}
-              color={
-                outcomes.winRate >= 60
-                  ? 'var(--success)'
-                  : outcomes.winRate >= 40
-                  ? 'var(--warning)'
-                  : 'var(--danger)'
-              }
-            />
+          </div>
+
+          <div
+            style={{
+              marginTop: 12,
+              paddingTop: 10,
+              borderTop: '1px solid var(--border)',
+              fontSize: 11,
+              color: 'var(--subtext)',
+              lineHeight: 1.5,
+              fontStyle: 'italic',
+            }}
+          >
+            «Сценарий сохранился» не означает, что решение было правильным.
+            Это значит, что условия твоего сценария подтвердились через 30 дней.
           </div>
         </div>
       )}
