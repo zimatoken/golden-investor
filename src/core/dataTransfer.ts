@@ -31,6 +31,8 @@ const EXPORT_KEYS = [
   PLAN_KEY,
   'gi_policy_v1',       // ← Policy (PHASE 3.1)
   'gi_invalidation_v1', // ← Invalidation (PHASE 3.3)
+  'gi_rate_guesses_v1', // ← Угадай ставку ЦБ (PHASE 10.1)
+  'gi_last_backup_v1',  // ← Дата последнего бэкапа (PHASE 5.5)
 ];
 
 export interface DataSnapshot {
