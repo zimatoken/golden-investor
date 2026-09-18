@@ -82,10 +82,14 @@ export interface DecisionEntry {
     status: 'act' | 'wait' | 'do-nothing';
   };
 
-  checkDate?: string;
-  outcome?: OutcomeType;
-  checkedAt?: string;
-  outcomeNote?: string;
+  // ─── НОВЫЕ ПОЛЯ (Фича 4) ──────────────────────
+  checkDate?: string;        // Когда проверять (date + 30 дней)
+  outcome?: OutcomeType;     // Результат проверки
+  checkedAt?: string;        // Когда пользователь ответил (ISO)
+  outcomeNote?: string;      // Комментарий пользователя (опционально)
+
+  // ─── v4: связь с Картой (для Trust System) ────
+  planRowId?: string;        // ID сценария из Карты, если решение по плану
 }
 
 export interface StatusHistoryEntry {

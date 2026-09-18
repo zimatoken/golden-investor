@@ -76,9 +76,36 @@ export function MapScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<PlanRow | null>(null);
 
+  // Сохранение при любом изменении
   useEffect(() => {
     savePlan(plan);
   }, [plan]);
+
+  // Синхронизация triggeredAt при изменении рынка или политики
+  useEffect(() => {
+    setPlan((prev) => {
+      const groups = groupScenarios(prev, market, policy);
+      const triggeredIds = new Set(groups.triggered.map((s) => s.row.id));
+
+      let changed = false;
+      const next = prev.map((row) => {
+        const isTriggered = triggeredIds.has(row.id);
+        const wasTriggered = !!row.triggeredAt;
+
+        if (isTriggered && !wasTriggered) {
+          changed = true;
+          return { ...row, triggeredAt: new Date().toISOString() };
+        }
+        if (!isTriggered && wasTriggered) {
+          changed = true;
+          return { ...row, triggeredAt: undefined };
+        }
+        return row;
+      });
+
+      return changed ? next : prev;
+    });
+  }, [market, policy]);
 
   const startEdit = (row: PlanRow) => {
     setEditingId(row.id);

@@ -21,6 +21,7 @@ import { InvalidationAlert } from '../components/InvalidationAlert';
 import { InvalidationEditor } from '../components/InvalidationEditor';
 import { PocketMode } from '../components/PocketMode';
 import { BackupBanner } from '../components/BackupBanner';
+import { TrustIndicator } from '../components/TrustIndicator';
 import { syncInvalidations, hasInvalidations } from '../core/invalidationEngine';
 import { loadPolicy, savePolicy, isPolicyConfigured } from '../core/investmentPolicy';
 import type { InvestmentPolicy } from '../types/policy';
@@ -37,7 +38,7 @@ export function StatusScreen() {
   const { market, updateMarket, resetToDefault, isStale, daysSince } =
     useMarketData();
   const status = deriveStatus(market);
-  const { monthAgo, recordStatus } = useDecisionLog();
+  const { monthAgo, recordStatus, decisions } = useDecisionLog();
 
   const [editOpen, setEditOpen] = useState(false);
   const [sourcesOpen, setSourcesOpen] = useState(false);
@@ -171,6 +172,16 @@ export function StatusScreen() {
 
       {/* POCKET MODE — сводка за 30 секунд */}
       {!editOpen && <PocketMode market={market} />}
+
+      {/* ДОВЕРИЕ ПЛАНУ (Trust System) */}
+      {!editOpen && (
+        <TrustIndicator
+          market={market}
+          plan={plan}
+          decisions={decisions}
+          policy={policy}
+        />
+      )}
 
       {/* АЛЕРТ ОТМЕНЫ СЦЕНАРИЯ */}
       {!editOpen && (
