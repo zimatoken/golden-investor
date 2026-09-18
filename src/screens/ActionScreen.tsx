@@ -8,7 +8,9 @@ import { useDecisionLog } from '../hooks/useDecisionLog';
 import {
   runMonteCarlo,
   getMonteCarloParams,
+  getScenarioParams,
   formatMoney,
+  type RateScenario,
 } from '../core/monteCarlo';
 import { MonteCarloChart } from '../components/MonteCarloChart';
 import { ActionGuide } from '../components/ActionGuide';
@@ -22,6 +24,7 @@ export function ActionScreen() {
   const [amount, setAmount] = useState<number>(100000);
   const [horizon, setHorizon] = useState<number>(10);
   const [pausedUntil, setPausedUntil] = useState<Date | null>(null);
+  const [scenarioLabel, setScenarioLabel] = useState<RateScenario>('flat');
   const { add } = useDecisionLog();
 
   const market = MANUAL_MARKET;
@@ -160,14 +163,27 @@ export function ActionScreen() {
     const inst = INSTRUMENTS.find((i) => i.id === instrument);
     const params = getMonteCarloParams(instrument, market);
 
+    // Для ОФЗ — сценарная модель. Для вклада и золота — базовые параметры.
+    const isScenarioMode = instrument === 'ofz';
+    const scenarioParams = isScenarioMode
+      ? getScenarioParams(market, horizon)
+      : null;
+
+    const activeScenario = scenarioParams?.find((s) => s.label === scenarioLabel)
+      ?? scenarioParams?.[1]
+      ?? null;
+
+    const effectiveReturn = activeScenario ? activeScenario.annualReturn : params.annualReturn;
+    const effectiveIsScenario = activeScenario ? true : params.isScenario;
+
     const mc = runMonteCarlo({
       instrument,
-      annualReturn: params.annualReturn,
+      annualReturn: effectiveReturn,
       volatility: params.volatility,
       horizonYears: horizon,
       initialAmount: amount,
       inflation: market.inflation,
-      isScenario: params.isScenario,
+      isScenario: effectiveIsScenario,
     });
 
     return (
@@ -284,10 +300,11 @@ export function ActionScreen() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
             <h3 style={{ margin: 0, color: 'var(--heading)', fontSize: 16 }}>
               🎲 Монте-Карло: 500 симуляций
+              {isScenarioMode && ' — сценарная модель'}
             </h3>
             <span style={{ fontSize: 12, color: 'var(--subtext)' }}>
-              {horizon} лет · доходность {params.annualReturn}% · волатильность {params.volatility}%
-              {params.isScenario && (
+              {horizon} лет · доходность {effectiveReturn}% · волатильность {params.volatility}%
+              {effectiveIsScenario && (
                 <span
                   style={{
                     marginLeft: 6,
@@ -306,6 +323,60 @@ export function ActionScreen() {
               )}
             </span>
           </div>
+
+          {/* СЕЛЕКТОР СЦЕНАРИЕВ — только для ОФЗ */}
+          {isScenarioMode && scenarioParams && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 6,
+                marginBottom: 16,
+                flexWrap: 'wrap',
+              }}
+            >
+              {scenarioParams.map((s) => (
+                <button
+                  key={s.label}
+                  onClick={() => setScenarioLabel(s.label)}
+                  style={{
+                    padding: '0.5rem 0.9rem',
+                    background: scenarioLabel === s.label ? 'var(--primary-dark)' : 'var(--card-bg-soft)',
+                    color: scenarioLabel === s.label ? '#fff' : 'var(--text)',
+                    border: '1px solid ' + (scenarioLabel === s.label ? 'var(--primary-dark)' : 'var(--border)'),
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    fontWeight: scenarioLabel === s.label ? 600 : 500,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {s.label === 'falling' ? '📉 Ставка ↓' :
+                   s.label === 'flat' ? '📊 Ставка →' :
+                   '📈 Ставка ↑'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ОПИСАНИЕ АКТИВНОГО СЦЕНАРИЯ */}
+          {activeScenario && (
+            <div
+              style={{
+                padding: '10px 12px',
+                background: 'var(--card-bg-soft)',
+                borderRadius: 8,
+                fontSize: 12,
+                color: 'var(--text-soft)',
+                marginBottom: 12,
+                lineHeight: 1.55,
+              }}
+            >
+              <div style={{ fontWeight: 600, color: 'var(--heading)', marginBottom: 4 }}>
+                {activeScenario.title}
+              </div>
+              <div>{activeScenario.description}</div>
+            </div>
+          )}
 
           {/* Метрики */}
           <div
@@ -346,6 +417,67 @@ export function ActionScreen() {
             </div>
           </div>
 
+          {/* СРАВНЕНИЕ ТРЁХ СЦЕНАРИЕВ — только для ОФЗ */}
+          {isScenarioMode && scenarioParams && (
+            <div
+              style={{
+                marginTop: 16,
+                paddingTop: 12,
+                borderTop: '1px solid var(--border)',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  color: 'var(--subtext)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  marginBottom: 8,
+                  fontWeight: 700,
+                }}
+              >
+                Сравнение сценариев (медиана, номинал)
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
+                {scenarioParams.map((s) => {
+                  const sMc = runMonteCarlo({
+                    instrument,
+                    annualReturn: s.annualReturn,
+                    volatility: params.volatility,
+                    horizonYears: horizon,
+                    initialAmount: amount,
+                    inflation: market.inflation,
+                    isScenario: true,
+                  });
+                  return (
+                    <div
+                      key={s.label}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '4px 8px',
+                        background: scenarioLabel === s.label ? 'rgba(59,130,246,0.08)' : 'transparent',
+                        borderRadius: 4,
+                      }}
+                    >
+                      <span style={{ color: 'var(--text-soft)' }}>
+                        {s.label === 'falling' ? '📉 Ставка ↓' :
+                         s.label === 'flat' ? '📊 Ставка →' :
+                         '📈 Ставка ↑'}
+                        <span style={{ color: 'var(--subtext)', marginLeft: 6 }}>
+                          ({s.annualReturn}%)
+                        </span>
+                      </span>
+                      <span style={{ fontWeight: 600, color: 'var(--text)' }}>
+                        {formatMoney(sMc.median)} ₽
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Дисклеймер */}
           <div
             style={{
@@ -359,12 +491,14 @@ export function ActionScreen() {
             }}
           >
             VaR 95% — модельная оценка порогового убытка при заданных
-            предположениях (доходность {params.annualReturn}%,
+            предположениях (доходность {effectiveReturn}%,
             волатильность {params.volatility}%, горизонт {horizon} лет).
             Это не максимальный возможный убыток.
-            {' '}
-            {params.isScenario && (
-              <>Доходность {params.annualReturn}% — <strong>сценарное допущение</strong>, а не прогноз.</>
+            {effectiveIsScenario && (
+              <>
+                {' '}
+                Доходность {effectiveReturn}% — <strong>сценарное допущение</strong>, не прогноз.
+              </>
             )}
           </div>
         </div>

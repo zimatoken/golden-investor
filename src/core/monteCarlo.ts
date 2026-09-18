@@ -181,3 +181,100 @@ export function formatMoney(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
+/* ─── PHASE 7.2: Сценарная модель для ОФЗ ──────── */
+
+/**
+ * Сценарий изменения ставки ЦБ.
+ */
+export type RateScenario = 'falling' | 'flat' | 'rising';
+
+export interface ScenarioParams {
+  label: RateScenario;
+  title: string;
+  /** Средняя годовая доходность за весь горизонт */
+  annualReturn: number;
+  /** Волатильность (оставляем фиксированной для ОФЗ) */
+  volatility: number;
+  /** ΔСтавки в п.п. (для ОФЗ) */
+  rateDeltaPp: number;
+  /** Доходность первого года */
+  firstYearReturn: number;
+  /** Доходность последующих лет */
+  steadyReturn: number;
+  /** Что это значит (для UI) */
+  description: string;
+}
+
+/**
+ * Duration для длинных ОФЗ. Используется приблизительная оценка.
+ * Точное значение — из duration.ts, но для сценария берём константу.
+ */
+const LONG_OFZ_DURATION = 8;
+
+/**
+ * Возвращает три сценария для ОФЗ.
+ *
+ * @param market — текущее состояние рынка
+ * @param horizonYears — горизонт в годах
+ */
+export function getScenarioParams(
+  market: MarketState,
+  horizonYears: number
+): ScenarioParams[] {
+  const coupon = market.ofz10y;        // купонная доходность = текущая доходность к погашению
+  const duration = LONG_OFZ_DURATION;
+
+  /**
+   * Считает среднюю годовую доходность с учётом эффекта первого года.
+   */
+  const avgReturn = (rateDeltaPp: number): { avg: number; first: number; steady: number } => {
+    const priceChangePct = -duration * rateDeltaPp;  // в %
+    const firstYear = coupon + priceChangePct;        // первый год: купон + прирост тела
+    const steady = coupon;                            // последующие годы: только купон
+
+    if (horizonYears <= 1) {
+      return { avg: firstYear, first: firstYear, steady };
+    }
+
+    const avg = (firstYear + (horizonYears - 1) * steady) / horizonYears;
+    return { avg, first: firstYear, steady };
+  };
+
+  const falling = avgReturn(-2);
+  const flat = avgReturn(0);
+  const rising = avgReturn(+2);
+
+  return [
+    {
+      label: 'falling',
+      title: '📉 Оптимистичный: ставка −2 п.п.',
+      annualReturn: Math.round(falling.avg * 100) / 100,
+      volatility: 9,
+      rateDeltaPp: -2,
+      firstYearReturn: Math.round(falling.first * 100) / 100,
+      steadyReturn: Math.round(falling.steady * 100) / 100,
+      description: `Первый год: +${falling.first.toFixed(2)}% (купон + рост тела). Дальше: ${falling.steady.toFixed(2)}%/год.`,
+    },
+    {
+      label: 'flat',
+      title: '📊 Базовый: ставка без изменений',
+      annualReturn: Math.round(flat.avg * 100) / 100,
+      volatility: 9,
+      rateDeltaPp: 0,
+      firstYearReturn: Math.round(flat.first * 100) / 100,
+      steadyReturn: Math.round(flat.steady * 100) / 100,
+      description: `Купон ${flat.steady.toFixed(2)}% весь срок. Тело не меняется.`,
+    },
+    {
+      label: 'rising',
+      title: '📈 Пессимистичный: ставка +2 п.п.',
+      annualReturn: Math.round(rising.avg * 100) / 100,
+      volatility: 9,
+      rateDeltaPp: +2,
+      firstYearReturn: Math.round(rising.first * 100) / 100,
+      steadyReturn: Math.round(rising.steady * 100) / 100,
+      description: `Первый год: ${rising.first >= 0 ? '+' : ''}${rising.first.toFixed(2)}% (купон − падение тела). Дальше: ${rising.steady.toFixed(2)}%/год.`,
+    },
+  ];
+}
