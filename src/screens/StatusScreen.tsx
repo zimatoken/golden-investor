@@ -21,6 +21,7 @@ import { InvalidationAlert } from '../components/InvalidationAlert';
 import { InvalidationEditor } from '../components/InvalidationEditor';
 import { PocketMode } from '../components/PocketMode';
 import { BackupBanner } from '../components/BackupBanner';
+import { RateGuess } from '../components/RateGuess';
 import { TrustIndicator } from '../components/TrustIndicator';
 import { syncInvalidations, hasInvalidations } from '../core/invalidationEngine';
 import { loadPolicy, savePolicy, isPolicyConfigured } from '../core/investmentPolicy';
@@ -179,6 +180,9 @@ export function StatusScreen() {
 
       {/* БАННЕР БЭКАПА */}
       {!editOpen && <BackupBanner />}
+
+      {/* УГАДАЙ СТАВКУ ЦБ (если заседание близко) */}
+      {!editOpen && <RateGuess market={market} />}
 
       {/* POCKET MODE — сводка за 30 секунд */}
       {!editOpen && <PocketMode market={market} />}
