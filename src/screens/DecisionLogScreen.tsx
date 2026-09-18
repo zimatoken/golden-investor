@@ -14,6 +14,7 @@ import {
 } from '../core/decisionLog';
 import { DecisionCard } from '../components/DecisionCard';
 import { DecisionStats } from '../components/DecisionStats';
+import { DecisionCalendar } from '../components/DecisionCalendar';
 import { OutcomeCheck } from '../components/OutcomeCheck';
 import { DataTransfer } from '../components/DataTransfer';
 
@@ -130,6 +131,9 @@ export function DecisionLogScreen() {
       {pending.length > 0 && (
         <OutcomeCheck pending={pending} onRecorded={refresh} />
       )}
+
+      {/* Календарь решений */}
+      {decisions.length > 0 && <DecisionCalendar decisions={decisions} />}
 
       {/* Статистика */}
       {decisions.length > 0 && <DecisionStats stats={stats} />}
