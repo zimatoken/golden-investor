@@ -1,6 +1,6 @@
 // src/screens/StatusScreen.tsx
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import { deriveStatus } from '../core/truthEngine';
 import { useDecisionLog } from '../hooks/useDecisionLog';
@@ -41,6 +41,7 @@ export function StatusScreen() {
   const { monthAgo, recordStatus, decisions } = useDecisionLog();
 
   const [editOpen, setEditOpen] = useState(false);
+  const editFormRef = useRef<HTMLDivElement>(null);
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const [draft, setDraft] = useState<MarketState>(market);
   const [policy, setPolicy] = useState<InvestmentPolicy>(() => loadPolicy());
@@ -77,7 +78,16 @@ export function StatusScreen() {
   }, [status, recordStatus]);
 
   useEffect(() => {
-    if (editOpen) setDraft(market);
+    if (editOpen) {
+      setDraft(market);
+      // Прокрутить к форме
+      setTimeout(() => {
+        editFormRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 50);
+    }
   }, [editOpen, market]);
 
   const statusConfig = {
@@ -245,6 +255,7 @@ export function StatusScreen() {
       {/* Форма редактирования ЦБ */}
       {editOpen && (
         <div
+          ref={editFormRef}
           style={{
             marginBottom: '1.5rem',
             padding: '1rem',
