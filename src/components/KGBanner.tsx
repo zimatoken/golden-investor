@@ -4,6 +4,7 @@
 import { formatAmount } from '../core/kgTransfer';
 import type { KGTransferData } from '../core/kgTransfer';
 import { acceptKGTransfer } from '../core/kgReceived';
+import { publishAccepted, publishDismissed } from '../core/bridgeToKG';
 import { useDecisionLog } from '../hooks/useDecisionLog';
 
 interface Props {
@@ -25,25 +26,41 @@ export function KGBanner({ data, onAccepted, onDismiss }: Props) {
       transferTs: data.ts,
     });
 
-    // 2. Пишем запись в Дневник решений — отдельным типом,
-    //    чтобы не путать с «buy / sell / wait».
+    // 2. Пишем запись в Дневник решений.
     add({
       id: crypto.randomUUID(),
       date: new Date().toISOString(),
       actionType: 'kg-received' as const,
       instrument: null,
-      amount: data.amountMinor / 100, // в рублях, как везде в дневнике
+      amount: data.amountMinor / 100,
       reason: 'Получено от Kapital Garden',
-      wasInPlan: true, // это не импульс — это осознанное действие
+      wasInPlan: true,
       marketSnapshot: {
-        keyRate: 0, // заполним ниже, если понадобится
+        keyRate: 0,
         inflation: 0,
         status: 'wait',
       },
     });
 
-    // 3. Сообщаем родителю — он покажет toast.
+    // 3. Обратный поток: сообщаем KG, что приняли.
+    publishAccepted({
+      ts: data.ts,
+      amountMinor: data.amountMinor,
+      currency: data.currency,
+    });
+
+    // 4. Сообщаем родителю — он покажет toast.
     onAccepted(data.amountMinor, data.currency);
+  };
+
+  const handleDismiss = () => {
+    // Обратный поток: сообщаем KG, что отложили.
+    publishDismissed({
+      ts: data.ts,
+      amountMinor: data.amountMinor,
+      currency: data.currency,
+    });
+    onDismiss();
   };
 
   return (
@@ -85,7 +102,7 @@ export function KGBanner({ data, onAccepted, onDismiss }: Props) {
           Принять
         </button>
         <button
-          onClick={onDismiss}
+          onClick={handleDismiss}
           style={{
             flex: 1,
             padding: '0.6rem',
