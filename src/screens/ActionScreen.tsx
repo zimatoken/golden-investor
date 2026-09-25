@@ -16,11 +16,14 @@ import { MonteCarloChart } from '../components/MonteCarloChart';
 import { ActionGuide } from '../components/ActionGuide';
 import { StressTest } from '../components/StressTest';
 import type { InstrumentType } from '../types/market';
+import { loadKGReceived, clearKGReceived } from '../core/kgReceived';
+import { formatAmount } from '../core/kgTransfer';
 
 type Step = 'choose-instrument' | 'check-plan' | 'paused' | 'scenarios';
 
 export function ActionScreen() {
   const [step, setStep] = useState<Step>('choose-instrument');
+  const [kgReceived, setKgReceived] = useState(() => loadKGReceived());
   const [instrument, setInstrument] = useState<InstrumentType | null>(null);
   const [amount, setAmount] = useState<number>(100000);
   const [horizon, setHorizon] = useState<number>(10);
@@ -38,6 +41,68 @@ export function ActionScreen() {
         <p style={{ color: 'var(--subtext)', marginBottom: 24 }}>
           Выбери инструмент — приложение покажет честные сценарии.
         </p>
+
+        {/* Блок «Свободные средства от Kapital Garden» */}
+        {kgReceived && (
+          <div
+            style={{
+              marginBottom: 16,
+              padding: '0.85rem 1rem',
+              background: 'rgba(34,197,94,0.08)',
+              border: '1px solid var(--success)',
+              borderRadius: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span style={{ fontSize: 22 }}>🌳</span>
+            <div style={{ flex: 1, fontSize: 13, lineHeight: 1.5, minWidth: 180 }}>
+              Свободные средства от <strong>Kapital Garden</strong>:{' '}
+              <strong style={{ color: 'var(--success)' }}>
+                {formatAmount(kgReceived.amountMinor, kgReceived.currency)}
+              </strong>
+            </div>
+            <button
+              onClick={() => {
+                // Подставляем сумму из KG в поле amount
+                setAmount(Math.round(kgReceived.amountMinor / 100));
+              }}
+              style={{
+                padding: '6px 10px',
+                background: 'var(--success)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Использовать
+            </button>
+            <button
+              onClick={() => {
+                clearKGReceived();
+                setKgReceived(null);
+              }}
+              style={{
+                padding: '6px 10px',
+                background: 'transparent',
+                color: 'var(--subtext)',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontSize: 12,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Сбросить
+            </button>
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {INSTRUMENTS.map((inst) => (
@@ -164,7 +229,6 @@ export function ActionScreen() {
     const inst = INSTRUMENTS.find((i) => i.id === instrument);
     const params = getMonteCarloParams(instrument, market);
 
-    // Для ОФЗ — сценарная модель. Для вклада и золота — базовые параметры.
     const isScenarioMode = instrument === 'ofz';
     const scenarioParams = isScenarioMode
       ? getScenarioParams(market, horizon)

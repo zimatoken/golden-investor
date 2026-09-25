@@ -3,15 +3,48 @@
 
 import { formatAmount } from '../core/kgTransfer';
 import type { KGTransferData } from '../core/kgTransfer';
+import { acceptKGTransfer } from '../core/kgReceived';
+import { useDecisionLog } from '../hooks/useDecisionLog';
 
 interface Props {
   data: KGTransferData;
-  onAccept: () => void;
+  /** Вызывается после успешного принятия (state + дневник) */
+  onAccepted: (amountMinor: number, currency: string) => void;
   onDismiss: () => void;
 }
 
-export function KGBanner({ data, onAccept, onDismiss }: Props) {
+export function KGBanner({ data, onAccepted, onDismiss }: Props) {
   const amountText = formatAmount(data.amountMinor, data.currency);
+  const { add } = useDecisionLog();
+
+  const handleAccept = () => {
+    // 1. Сохраняем принятую сумму в localStorage ЗИ.
+    acceptKGTransfer({
+      amountMinor: data.amountMinor,
+      currency: data.currency,
+      transferTs: data.ts,
+    });
+
+    // 2. Пишем запись в Дневник решений — отдельным типом,
+    //    чтобы не путать с «buy / sell / wait».
+    add({
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      actionType: 'kg-received' as const,
+      instrument: null,
+      amount: data.amountMinor / 100, // в рублях, как везде в дневнике
+      reason: 'Получено от Kapital Garden',
+      wasInPlan: true, // это не импульс — это осознанное действие
+      marketSnapshot: {
+        keyRate: 0, // заполним ниже, если понадобится
+        inflation: 0,
+        status: 'wait',
+      },
+    });
+
+    // 3. Сообщаем родителю — он покажет toast.
+    onAccepted(data.amountMinor, data.currency);
+  };
 
   return (
     <div
@@ -32,11 +65,11 @@ export function KGBanner({ data, onAccept, onDismiss }: Props) {
         <strong style={{ color: 'var(--success)' }}>{amountText}</strong>.
       </div>
       <div style={{ fontSize: 12, color: 'var(--subtext)' }}>
-        Принять — сохранить сумму для расчётов. Позже — скрыть баннер.
+        Принять — сохранить сумму и записать в Дневник. Позже — скрыть баннер.
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button
-          onClick={onAccept}
+          onClick={handleAccept}
           style={{
             flex: 1,
             padding: '0.6rem',

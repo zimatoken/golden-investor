@@ -71,7 +71,7 @@ export type OutcomeType = 'win' | 'loss' | 'unclear';
 export interface DecisionEntry {
   id: string;
   date: string;
-  actionType: 'buy' | 'sell' | 'wait';
+  actionType: 'buy' | 'sell' | 'wait' | 'kg-received';
   instrument: InstrumentType | null;
   amount: number | null;
   reason: string;

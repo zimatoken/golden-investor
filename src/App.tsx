@@ -15,6 +15,7 @@ import { useTheme } from './hooks/useTheme';
 import { useNotifications } from './hooks/useNotifications';
 import { useKGTransfer } from './hooks/useKGTransfer';
 import { KGBanner } from './components/KGBanner';
+import { KGToast } from './components/KGToast';
 
 type Screen = 'status' | 'action' | 'goal' | 'map' | 'log';
 
@@ -39,6 +40,8 @@ const ONBOARDING_KEY = 'golden-investor-onboarding-done';
 export function App() {
   const [screen, setScreen] = useState<Screen>('status');
   const [helpOpen, setHelpOpen] = useState(false);
+  const [toast, setToast] = useState<{ amountMinor: number; currency: string } | null>(null);
+
   const { theme, toggleTheme } = useTheme();
   const {
     permission,
@@ -146,10 +149,9 @@ export function App() {
         {kgData && (
           <KGBanner
             data={kgData}
-            onAccept={() => {
-              // Пока просто логируем. Позже — сохраним в нужное место
-              // (например, в decisionLog или в отдельный ключ localStorage).
-              console.log('[ЗИ] Принят пакет от KG:', kgData);
+            onAccepted={(amountMinor, currency) => {
+              // Показать toast + скрыть баннер
+              setToast({ amountMinor, currency });
               dismissKG();
             }}
             onDismiss={dismissKG}
@@ -176,6 +178,19 @@ export function App() {
         onClose={handleCloseHelp}
         initialSectionId={SCREEN_TO_HELP[screen]}
       />
+
+      {/* Toast «Принято X ₽ · Куда вложить?» */}
+      {toast && (
+        <KGToast
+          amountMinor={toast.amountMinor}
+          currency={toast.currency}
+          onGoToAction={() => {
+            setScreen('action');
+            setToast(null);
+          }}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

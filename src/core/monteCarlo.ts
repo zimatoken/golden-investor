@@ -7,7 +7,7 @@ import type { MarketState } from '../data/manualMarket';
  * Параметры инструмента для Монте-Карло.
  */
 export interface MonteCarloParams {
-  instrument: InstrumentType;
+  instrument: InstrumentType | null;
   annualReturn: number;    // Ожидаемая доходность, % годовых (из market или сценарий)
   volatility: number;      // Волатильность, % годовых
   horizonYears: number;    // Горизонт, лет
