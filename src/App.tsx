@@ -17,6 +17,7 @@ import { useNotifications } from './hooks/useNotifications';
 import { useKGTransfer } from './hooks/useKGTransfer';
 import { KGBanner } from './components/KGBanner';
 import { KGToast } from './components/KGToast';
+import { NavigationProvider, useNavigation } from './contexts/NavigationContext';
 
 type Screen = 'status' | 'action' | 'goal' | 'map' | 'log';
 
@@ -38,7 +39,19 @@ const NAV_ITEMS: { id: Screen; icon: string; label: string }[] = [
 
 const ONBOARDING_KEY = 'golden-investor-onboarding-done';
 
+/**
+ * Внешний компонент — только провайдер + внутренний App.
+ * Внутри — уже можно пользоваться useNavigation().
+ */
 export function App() {
+  return (
+    <NavigationProvider>
+      <AppInner />
+    </NavigationProvider>
+  );
+}
+
+function AppInner() {
   const [screen, setScreen] = useState<Screen>('status');
   const [helpOpen, setHelpOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -52,8 +65,9 @@ export function App() {
     dismissBanner,
   } = useNotifications();
   const { data: kgData, dismiss: dismissKG } = useKGTransfer();
+  const { dispatch } = useNavigation();
 
-  // Онбординг: при первом заходе — открыть инструкцию
+  // Онбординг
   useEffect(() => {
     const isOnboardingDone = localStorage.getItem(ONBOARDING_KEY) === '1';
     if (!isOnboardingDone) {
@@ -70,6 +84,20 @@ export function App() {
     await requestPermission();
   };
 
+  /**
+   * Хелпер: переключить экран и опционально поставить отложенное действие.
+   * SettingsModal вызывает его, чтобы «открыть политику» — попадаем на
+   * экран «Где я», и StatusScreen сам откроет нужную модалку.
+   */
+  const goToScreen = (next: Screen, action?: Parameters<typeof dispatch>[0]) => {
+    setScreen(next);
+    if (action) {
+      // Микро-задержка, чтобы StatusScreen успел смонтироваться,
+      // если мы уходили с другого экрана.
+      setTimeout(() => dispatch(action), 0);
+    }
+  };
+
   return (
     <div
       className="app-root"
@@ -81,9 +109,8 @@ export function App() {
         transition: 'background 0.2s ease, color 0.2s ease',
       }}
     >
-      {/* ─── Навигация (две строки на мобильном) ─── */}
+      {/* ─── Навигация (две строки) ─── */}
       <nav className="app-nav">
-        {/* Строка 1: 5 экранов */}
         <div className="app-nav-row app-nav-screens">
           {NAV_ITEMS.map((item) => {
             const isActive = screen === item.id;
@@ -100,7 +127,6 @@ export function App() {
           })}
         </div>
 
-        {/* Строка 2: иконки действий */}
         <div className="app-nav-row app-nav-actions">
           <button
             onClick={toggleTheme}
@@ -125,7 +151,6 @@ export function App() {
       </nav>
 
       <main style={{ padding: '1rem', maxWidth: 900, margin: '0 auto' }}>
-        {/* Баннер от Kapital Garden — если пришли с ?from=kg&amount=... */}
         {kgData && (
           <KGBanner
             data={kgData}
@@ -137,7 +162,6 @@ export function App() {
           />
         )}
 
-        {/* Баннер уведомлений / напоминаний */}
         <NotificationBanner
           permission={permission}
           reminders={bannerReminders}
@@ -165,9 +189,16 @@ export function App() {
           setSettingsOpen(false);
           setHelpOpen(true);
         }}
+        onToggleTheme={() => {
+          setSettingsOpen(false);
+          toggleTheme();
+        }}
+        onGoToStatus={(action) => {
+          setSettingsOpen(false);
+          goToScreen('status', action);
+        }}
       />
 
-      {/* Toast «Принято X ₽ · Куда вложить?» */}
       {toast && (
         <KGToast
           amountMinor={toast.amountMinor}

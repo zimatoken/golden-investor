@@ -1,18 +1,28 @@
 // src/components/SettingsModal.tsx
-// Единая точка входа в настройки ЗИ.
-// Каждая «настройка» — это shortcut к существующему экрану/модалке.
-// Модалка сама ничего не хранит — только редиректит.
+//
+// Единая точка входа в настройки.
+// Каждая строка делает реальный переход или действие — никаких alert().
+
+import type { PendingAction } from '../contexts/NavigationContext';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onOpenHelp: () => void;
+  onToggleTheme: () => void;
+  /** Перейти на «Где я» и опционально открыть модалку (политика / инвалидации / data-transfer). */
+  onGoToStatus: (action?: PendingAction) => void;
 }
 
-export function SettingsModal({ open, onClose, onOpenHelp }: Props) {
+export function SettingsModal({
+  open,
+  onClose,
+  onOpenHelp,
+  onToggleTheme,
+  onGoToStatus,
+}: Props) {
   if (!open) return null;
 
-  /** Единый рендер строки-настройки. */
   const Row = ({
     icon,
     title,
@@ -147,7 +157,7 @@ export function SettingsModal({ open, onClose, onOpenHelp }: Props) {
             margin: '0 0 16px 0',
           }}
         >
-          Здесь — быстрые ссылки на всё, что можно настроить.
+          Быстрые ссылки на всё, что можно настроить.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -155,64 +165,35 @@ export function SettingsModal({ open, onClose, onOpenHelp }: Props) {
             icon="📋"
             title="Политика"
             subtitle="Горизонт, просадка, ликвидность, цель, опыт"
-            action={() => {
-              onClose();
-              // Даём React время закрыть модалку, потом скроллим к статусу.
-              // Политика — на статус-экране. Пользователь попадёт туда через навигацию.
-              // Просто закрываем — он сам нажмёт «Где я» → «Настроить политику».
-              // Альтернатива: сделать редирект через onGoToScreen, но это усложнение.
-              // Пока — закрываем.
-              alert('Открой «📍 Где я» → блок «Ваша политика» → «Настроить».');
-            }}
+            action={() => onGoToStatus({ type: 'open-policy' })}
           />
 
           <Row
             icon="⚠️"
             title="Что изменит моё мнение?"
             subtitle="Условия, при которых пересматриваешь решения"
-            action={() => {
-              onClose();
-              alert('Открой «📍 Где я» → кнопка «⚠️ Что изменит моё мнение?».');
-            }}
-          />
-
-          <Row
-            icon="🔔"
-            title="Уведомления"
-            subtitle="Напоминания о заседаниях ЦБ и купонах"
-            action={() => {
-              onClose();
-              alert('Разреши уведомления через баннер вверху «Где я».');
-            }}
+            action={() => onGoToStatus({ type: 'open-invalidation' })}
           />
 
           <Row
             icon="💾"
-            title="Бэкап"
-            subtitle="Экспорт/импорт всех данных (JSON)"
-            action={() => {
-              onClose();
-              alert('Кнопка «💾» в шапке — экспорт/импорт.');
-            }}
+            title="Бэкап / Перенос данных"
+            subtitle="Экспорт и импорт всех данных (JSON)"
+            action={() => onGoToStatus({ type: 'open-data-transfer' })}
           />
 
           <Row
             icon="📘"
             title="Инструкция"
             subtitle="Курс молодого бойца по ЗИ"
-            action={() => {
-              onOpenHelp();
-            }}
+            action={onOpenHelp}
           />
 
           <Row
             icon="🌗"
             title="Тема"
-            subtitle="Светлая / тёмная — переключается кнопкой в шапке"
-            action={() => {
-              onClose();
-              alert('Кнопка «🌙 / ☀️» в шапке.');
-            }}
+            subtitle="Светлая ↔ тёмная"
+            action={onToggleTheme}
           />
         </div>
 

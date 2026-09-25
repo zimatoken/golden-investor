@@ -25,6 +25,8 @@ import { RateGuess } from '../components/RateGuess';
 import { TrustIndicator } from '../components/TrustIndicator';
 import { syncInvalidations, hasInvalidations } from '../core/invalidationEngine';
 import { loadPolicy, savePolicy, isPolicyConfigured } from '../core/investmentPolicy';
+import { useNavigation } from '../contexts/NavigationContext';
+import { DataTransfer } from '../components/DataTransfer';
 import type { InvestmentPolicy } from '../types/policy';
 import { MARKET_SOURCES } from '../data/sources';
 import { getOracleAdvice } from '../core/oracle';
@@ -58,6 +60,23 @@ export function StatusScreen() {
 
   const [invalidationEditorOpen, setInvalidationEditorOpen] = useState(false);
   const [invalidationVersion, setInvalidationVersion] = useState(0);
+  const [dataTransferOpen, setDataTransferOpen] = useState(false);
+  const { pending, consume } = useNavigation();
+
+  // Реагируем на отложенные действия от SettingsModal.
+  useEffect(() => {
+    if (!pending) return;
+    if (pending.type === 'open-policy') {
+      setPolicyEditorOpen(true);
+      consume();
+    } else if (pending.type === 'open-invalidation') {
+      setInvalidationEditorOpen(true);
+      consume();
+    } else if (pending.type === 'open-data-transfer') {
+      setDataTransferOpen(true);
+      consume();
+    }
+  }, [pending, consume]);
 
   // Синхронизировать triggered-флаги при загрузке и при изменении market
   useEffect(() => {
@@ -639,6 +658,12 @@ export function StatusScreen() {
         initial={policy}
         onSave={handleSavePolicy}
         onClose={() => setPolicyEditorOpen(false)}
+      />
+
+      {/* МОДАЛКА «ПЕРЕНОС ДАННЫХ» (открывается из ⚙️ → Бэкап) */}
+      <DataTransfer
+        open={dataTransferOpen}
+        onClose={() => setDataTransferOpen(false)}
       />
     </div>
   );
