@@ -101,29 +101,60 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: isMobile ? '0.75rem 1rem' : '1rem 1.25rem',
+            gap: 8,
+            padding: isMobile ? '0.6rem 0.75rem' : '1rem 1.25rem',
             borderBottom: '1px solid var(--border)',
             background: 'var(--primary-dark)',
             color: '#fff',
             flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 22 }}>📘</span>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>Инструкция</div>
-              <div style={{ fontSize: 12, opacity: 0.7 }}>
-                {isMobile ? 'Курс молодого бойца' : 'Курс молодого бойца по «Золотому Инвестору»'}
+          {/* Блок заголовка — может сжиматься */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              minWidth: 0,
+              flex: 1,
+            }}
+          >
+            <span style={{ fontSize: isMobile ? 18 : 22, flexShrink: 0 }}>📘</span>
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: isMobile ? 14 : 16,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                Инструкция
               </div>
+              {!isMobile && (
+                <div style={{ fontSize: 12, opacity: 0.7 }}>
+                  Курс молодого бойца по «Золотому Инвестору»
+                </div>
+              )}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+
+          {/* Блок кнопок — не сжимается */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 6,
+              alignItems: 'center',
+              flexShrink: 0,
+            }}
+          >
             <button
               onClick={downloadInstructionsHTML}
               title="Скачать HTML-файл с инструкцией"
               aria-label="Скачать инструкцию"
               style={{
-                padding: '0.4rem 0.7rem',
+                padding: isMobile ? '0.35rem 0.5rem' : '0.4rem 0.7rem',
                 background: 'transparent',
                 color: '#fff',
                 border: '1px solid rgba(255,255,255,0.2)',
@@ -136,7 +167,8 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
                 fontWeight: 600,
               }}
             >
-              📥 <span>{isMobile ? 'HTML' : 'Скачать'}</span>
+              📥
+              {!isMobile && <span>Скачать</span>}
             </button>
 
             <button
@@ -144,7 +176,7 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
               title="Открыть для печати в PDF (выбери «Сохранить как PDF»)"
               aria-label="Печать PDF"
               style={{
-                padding: '0.4rem 0.7rem',
+                padding: isMobile ? '0.35rem 0.5rem' : '0.4rem 0.7rem',
                 background: 'transparent',
                 color: '#fff',
                 border: '1px solid rgba(255,255,255,0.2)',
@@ -157,14 +189,15 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
                 fontWeight: 600,
               }}
             >
-              🖨 <span>{isMobile ? 'PDF' : 'Печать PDF'}</span>
+              🖨
+              {!isMobile && <span>Печать PDF</span>}
             </button>
 
             <button
               onClick={onClose}
               aria-label="Закрыть"
               style={{
-                padding: '0.4rem',
+                padding: isMobile ? '0.35rem' : '0.4rem',
                 background: 'transparent',
                 color: '#fff',
                 border: '1px solid rgba(255,255,255,0.2)',
@@ -174,7 +207,7 @@ export function HelpModal({ open, onClose, initialSectionId = 'general' }: Props
                 alignItems: 'center',
               }}
             >
-              <X size={20} />
+              <X size={isMobile ? 18 : 20} />
             </button>
           </div>
         </div>

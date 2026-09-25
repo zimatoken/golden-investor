@@ -1,7 +1,7 @@
 // src/App.tsx
 
 import { useEffect, useState } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, Settings as SettingsIcon } from 'lucide-react';
 import { StatusScreen } from './screens/StatusScreen';
 import { ActionScreen } from './screens/ActionScreen';
 import { MapScreen } from './screens/MapScreen';
@@ -9,6 +9,7 @@ import { DecisionLogScreen } from './screens/DecisionLogScreen';
 import { GoalScreen } from './screens/GoalScreen';
 import { HelpButton } from './components/HelpButton';
 import { HelpModal } from './components/HelpModal';
+import { SettingsModal } from './components/SettingsModal';
 import { BackupIndicator } from './components/BackupIndicator';
 import { NotificationBanner } from './components/NotificationBanner';
 import { useTheme } from './hooks/useTheme';
@@ -40,6 +41,7 @@ const ONBOARDING_KEY = 'golden-investor-onboarding-done';
 export function App() {
   const [screen, setScreen] = useState<Screen>('status');
   const [helpOpen, setHelpOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [toast, setToast] = useState<{ amountMinor: number; currency: string } | null>(null);
 
   const { theme, toggleTheme } = useTheme();
@@ -70,6 +72,7 @@ export function App() {
 
   return (
     <div
+      className="app-root"
       style={{
         minHeight: '100vh',
         background: 'var(--bg)',
@@ -78,70 +81,47 @@ export function App() {
         transition: 'background 0.2s ease, color 0.2s ease',
       }}
     >
-      {/* ─── Навигация ─────────────────────── */}
-      <nav
-        style={{
-          display: 'flex',
-          gap: '0.4rem',
-          padding: '0.75rem 1rem',
-          background: 'var(--primary-dark)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          alignItems: 'center',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
-        }}
-      >
-        {NAV_ITEMS.map((item) => {
-          const isActive = screen === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setScreen(item.id)}
-              style={{
-                flex: 1,
-                padding: '0.6rem 0.4rem',
-                background: isActive ? 'rgba(255,255,255,0.12)' : 'transparent',
-                color: '#f1f5f9',
-                border: isActive ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontSize: '0.8rem',
-                fontWeight: isActive ? 600 : 500,
-                transition: 'background 0.15s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 4,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <span style={{ fontSize: 14 }}>{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
+      {/* ─── Навигация (две строки на мобильном) ─── */}
+      <nav className="app-nav">
+        {/* Строка 1: 5 экранов */}
+        <div className="app-nav-row app-nav-screens">
+          {NAV_ITEMS.map((item) => {
+            const isActive = screen === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setScreen(item.id)}
+                className={`app-nav-btn${isActive ? ' app-nav-btn-active' : ''}`}
+              >
+                <span className="app-nav-icon">{item.icon}</span>
+                <span className="app-nav-label">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
 
-        <button
-          onClick={toggleTheme}
-          aria-label={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
-          style={{
-            padding: '0.5rem 0.6rem',
-            background: 'rgba(255,255,255,0.08)',
-            color: '#f1f5f9',
-            border: '1px solid rgba(255,255,255,0.15)',
-            borderRadius: 8,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
+        {/* Строка 2: иконки действий */}
+        <div className="app-nav-row app-nav-actions">
+          <button
+            onClick={toggleTheme}
+            aria-label={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
+            className="app-nav-icon-btn"
+          >
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
 
-        <BackupIndicator />
-        <HelpButton onClick={() => setHelpOpen(true)} />
+          <BackupIndicator />
+
+          <button
+            onClick={() => setSettingsOpen(true)}
+            aria-label="Настройки"
+            className="app-nav-icon-btn"
+          >
+            <SettingsIcon size={18} />
+          </button>
+
+          <HelpButton onClick={() => setHelpOpen(true)} />
+        </div>
       </nav>
 
       <main style={{ padding: '1rem', maxWidth: 900, margin: '0 auto' }}>
@@ -150,7 +130,6 @@ export function App() {
           <KGBanner
             data={kgData}
             onAccepted={(amountMinor, currency) => {
-              // Показать toast + скрыть баннер
               setToast({ amountMinor, currency });
               dismissKG();
             }}
@@ -177,6 +156,15 @@ export function App() {
         open={helpOpen}
         onClose={handleCloseHelp}
         initialSectionId={SCREEN_TO_HELP[screen]}
+      />
+
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onOpenHelp={() => {
+          setSettingsOpen(false);
+          setHelpOpen(true);
+        }}
       />
 
       {/* Toast «Принято X ₽ · Куда вложить?» */}

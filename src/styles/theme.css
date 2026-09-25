@@ -1491,3 +1491,113 @@ body {
     font-size: 12px;
   }
 }
+
+/* ─── Navbar (адаптив) ─────────────────── */
+
+.app-nav {
+  background: var(--primary-dark);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.app-nav-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.app-nav-screens {
+  width: 100%;
+}
+
+.app-nav-screens .app-nav-btn {
+  flex: 1;
+}
+
+.app-nav-actions {
+  justify-content: flex-end;
+}
+
+.app-nav-btn {
+  padding: 0.55rem 0.5rem;
+  background: transparent;
+  color: #f1f5f9;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 500;
+  transition: background 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.app-nav-btn-active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+}
+
+.app-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.app-nav-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.app-nav-label {
+  line-height: 1;
+}
+
+.app-nav-icon-btn {
+  padding: 0.5rem 0.6rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ─── Мобильный адаптив: строки делим ─── */
+@media (max-width: 480px) {
+  .app-nav-screens {
+    /* 5 кнопок в строке на телефоне — плотнее */
+    gap: 0.25rem;
+  }
+  .app-nav-screens .app-nav-btn {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.7rem;
+    /* На очень узких экранах убираем текст, оставляем эмодзи */
+  }
+  .app-nav-label {
+    display: inline;
+  }
+}
+
+/* Очень узкие экраны: скрываем текст, показываем только эмодзи */
+@media (max-width: 380px) {
+  .app-nav-label {
+    display: none;
+  }
+  .app-nav-icon {
+    font-size: 18px;
+  }
+}
