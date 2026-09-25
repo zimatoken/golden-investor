@@ -13,6 +13,8 @@ import { BackupIndicator } from './components/BackupIndicator';
 import { NotificationBanner } from './components/NotificationBanner';
 import { useTheme } from './hooks/useTheme';
 import { useNotifications } from './hooks/useNotifications';
+import { useKGTransfer } from './hooks/useKGTransfer';
+import { KGBanner } from './components/KGBanner';
 
 type Screen = 'status' | 'action' | 'goal' | 'map' | 'log';
 
@@ -44,6 +46,7 @@ export function App() {
     bannerReminders,
     dismissBanner,
   } = useNotifications();
+  const { data: kgData, dismiss: dismissKG } = useKGTransfer();
 
   // Онбординг: при первом заходе — открыть инструкцию
   useEffect(() => {
@@ -139,6 +142,20 @@ export function App() {
       </nav>
 
       <main style={{ padding: '1rem', maxWidth: 900, margin: '0 auto' }}>
+        {/* Баннер от Kapital Garden — если пришли с ?from=kg&amount=... */}
+        {kgData && (
+          <KGBanner
+            data={kgData}
+            onAccept={() => {
+              // Пока просто логируем. Позже — сохраним в нужное место
+              // (например, в decisionLog или в отдельный ключ localStorage).
+              console.log('[ЗИ] Принят пакет от KG:', kgData);
+              dismissKG();
+            }}
+            onDismiss={dismissKG}
+          />
+        )}
+
         {/* Баннер уведомлений / напоминаний */}
         <NotificationBanner
           permission={permission}
